@@ -1,0 +1,155 @@
+name: Release macOS
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing vX.Y.Z tag to release
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-macos-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: macos-15
+    env:
+      CARGO_TERM_COLOR: always
+      APPLE_ID: ${{ secrets.APPLE_ID }}
+      APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+    steps:
+      - name: Resolve release tag
+        id: release
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            tag="${{ inputs.tag }}"
+          else
+            tag="${GITHUB_REF_NAME}"
+          fi
+          if [[ ! "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Expected a vX.Y.Z tag, got: $tag" >&2
+            exit 1
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.release.outputs.tag }}
+
+      - name: Verify Cargo version
+        shell: bash
+        run: |
+          cargo_version="$(sed -n '/^name = "zeroreq"$/{n;s/version = "\([^"]*\)"/\1/p;q;}' crates/zeroreq/Cargo.toml)"
+          test "$cargo_version" = "${{ steps.release.outputs.version }}"
+
+      - name: Cache Cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/git
+            ~/.cargo/registry
+            target
+          key: macos-universal-${{ hashFiles('Cargo.lock') }}
+
+      - name: Import Developer ID certificate
+        env:
+          APPLE_CERTIFICATE_P12: ${{ secrets.APPLE_CERTIFICATE_P12 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+        shell: bash
+        run: |
+          certificate_path="$RUNNER_TEMP/developer-id.p12"
+          keychain_path="$RUNNER_TEMP/zeroreq-signing.keychain-db"
+          keychain_password="$(openssl rand -hex 24)"
+
+          printf '%s' "$APPLE_CERTIFICATE_P12" | base64 --decode > "$certificate_path"
+          security create-keychain -p "$keychain_password" "$keychain_path"
+          security set-keychain-settings -lut 21600 "$keychain_path"
+          security unlock-keychain -p "$keychain_password" "$keychain_path"
+          security import "$certificate_path" \
+            -P "$APPLE_CERTIFICATE_PASSWORD" \
+            -A -t cert -f pkcs12 \
+            -k "$keychain_path"
+          security set-key-partition-list \
+            -S apple-tool:,apple:,codesign: \
+            -s -k "$keychain_password" \
+            "$keychain_path"
+          security list-keychains -d user -s "$keychain_path"
+
+          identity="$(security find-identity -v -p codesigning "$keychain_path" |
+            sed -n 's/.*"\(Developer ID Application:.*\)"/\1/p' |
+            head -1)"
+          test -n "$identity"
+          echo "SIGN_IDENTITY=$identity" >> "$GITHUB_ENV"
+
+      - name: Build signed universal app
+        env:
+          VERSION: ${{ steps.release.outputs.version }}
+          BUILD_VERSION: ${{ github.run_number }}
+        run: ./scripts/build-macos.sh
+
+      - name: Notarize and package
+        env:
+          VERSION: ${{ steps.release.outputs.version }}
+        run: ./scripts/package-macos.sh
+
+      - name: Verify release artifacts
+        env:
+          VERSION: ${{ steps.release.outputs.version }}
+        shell: bash
+        run: |
+          codesign --verify --deep --strict --verbose=2 dist/Zeroreq.app
+          spctl --assess --type execute --verbose=2 dist/Zeroreq.app
+          spctl --assess --type open --context context:primary-signature --verbose=2 \
+            "dist/Zeroreq-$VERSION-universal.dmg"
+          xcrun stapler validate dist/Zeroreq.app
+          xcrun stapler validate "dist/Zeroreq-$VERSION-universal.dmg"
+
+      - name: Create updater manifest and checksums
+        env:
+          VERSION: ${{ steps.release.outputs.version }}
+          TAG: ${{ steps.release.outputs.tag }}
+        shell: bash
+        run: |
+          zip_name="Zeroreq-$VERSION-universal.zip"
+          zip_sha="$(shasum -a 256 "dist/$zip_name" | awk '{print $1}')"
+          jq -n \
+            --arg version "$VERSION" \
+            --arg url "https://github.com/${GITHUB_REPOSITORY}/releases/download/$TAG/$zip_name" \
+            --arg sha256 "$zip_sha" \
+            '{version: $version, url: $url, sha256: $sha256}' \
+            > dist/zeroreq-update.json
+          (
+            cd dist
+            shasum -a 256 \
+              "$zip_name" \
+              "Zeroreq-$VERSION-universal.dmg" \
+              zeroreq-update.json \
+              > SHA256SUMS
+          )
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.release.outputs.tag }}
+          VERSION: ${{ steps.release.outputs.version }}
+        shell: bash
+        run: |
+          gh release create "$TAG" \
+            --verify-tag \
+            --generate-notes \
+            --title "Zeroreq $VERSION" \
+            "dist/Zeroreq-$VERSION-universal.dmg" \
+            "dist/Zeroreq-$VERSION-universal.zip" \
+            dist/zeroreq-update.json \
+            dist/SHA256SUMS

@@ -38,6 +38,7 @@ fn main() {
         gpui_component::init(cx);
         zeroreq_theme::init(cx);
         zeroreq::init(cx);
+        zeroreq::updater::start_automatic_check(cx);
 
         let window_options = zeroreq::window_options::use_window_options(cx);
 

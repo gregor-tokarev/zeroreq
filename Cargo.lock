@@ -8371,6 +8371,10 @@ dependencies = [
  "gpui",
  "gpui-component",
  "gpui_platform",
+ "semver",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
  "theme",
 ]
 
