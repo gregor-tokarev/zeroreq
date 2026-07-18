@@ -1,4 +1,10 @@
-# Zeroreq
+<p align="center">
+  <img src=".github/icon.png" width="128" alt="Zeroreq icon">
+</p>
+
+<h1 align="center">Zeroreq</h1>
+
+<p align="center">zero-friction API client</p>
 
 ## macOS releases
 
