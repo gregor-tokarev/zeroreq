@@ -10,6 +10,11 @@ on:
         description: Existing vX.Y.Z tag to release
         required: true
         type: string
+      dry_run:
+        description: Build, sign, notarize, and verify without publishing a release
+        required: true
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -45,11 +50,12 @@ jobs:
 
       - uses: actions/checkout@v4
         with:
-          ref: ${{ steps.release.outputs.tag }}
+          ref: ${{ inputs.dry_run && 'main' || steps.release.outputs.tag }}
 
       - name: Verify Cargo version
         shell: bash
         run: |
+          test "$(uname -m)" = "arm64"
           cargo_version="$(sed -n '/^name = "zeroreq"$/{n;s/version = "\([^"]*\)"/\1/p;q;}' crates/zeroreq/Cargo.toml)"
           test "$cargo_version" = "${{ steps.release.outputs.version }}"
 
@@ -140,6 +146,7 @@ jobs:
           )
 
       - name: Publish GitHub release
+        if: ${{ github.event_name != 'workflow_dispatch' || !inputs.dry_run }}
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.release.outputs.tag }}
