@@ -16,14 +16,6 @@ Application certificate, enables the hardened runtime, notarizes the app and
 DMG with Apple, staples the notarization tickets, and publishes the ZIP, DMG,
 update manifest, and SHA-256 checksums to a GitHub release.
 
-The repository needs these Actions secrets:
-
-- `APPLE_CERTIFICATE_P12`
-- `APPLE_CERTIFICATE_PASSWORD`
-- `APPLE_ID`
-- `APPLE_APP_SPECIFIC_PASSWORD`
-- `APPLE_TEAM_ID`
-
 Zeroreq checks the latest GitHub release when an installed app starts. Users can
 also choose **Zeroreq → Check for Updates…**. Before replacing the app, the
 updater verifies the archive checksum, Apple Developer ID signature, expected
