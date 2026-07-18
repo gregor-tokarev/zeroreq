@@ -48,7 +48,7 @@ jobs:
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
           echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ inputs.dry_run && 'main' || steps.release.outputs.tag }}
 
@@ -60,7 +60,7 @@ jobs:
           test "$cargo_version" = "${{ steps.release.outputs.version }}"
 
       - name: Cache Cargo
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/git
