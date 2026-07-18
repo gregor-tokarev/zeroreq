@@ -8,22 +8,14 @@ BUILD_VERSION="${BUILD_VERSION:-1}"
 DIST_DIR="${DIST_DIR:-$ROOT/dist}"
 APP="$DIST_DIR/Zeroreq.app"
 SIGN_IDENTITY="${SIGN_IDENTITY:--}"
+TARGET="${TARGET:-aarch64-apple-darwin}"
 
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 
-if [[ "${UNIVERSAL:-1}" == "1" ]]; then
-  rustup target add aarch64-apple-darwin x86_64-apple-darwin
-  cargo build --locked --release -p zeroreq --target aarch64-apple-darwin
-  cargo build --locked --release -p zeroreq --target x86_64-apple-darwin
-  /usr/bin/lipo -create \
-    "$ROOT/target/aarch64-apple-darwin/release/zeroreq" \
-    "$ROOT/target/x86_64-apple-darwin/release/zeroreq" \
-    -output "$APP/Contents/MacOS/zeroreq"
-else
-  cargo build --locked --release -p zeroreq
-  cp "$ROOT/target/release/zeroreq" "$APP/Contents/MacOS/zeroreq"
-fi
+rustup target add "$TARGET"
+cargo build --locked --release -p zeroreq --target "$TARGET"
+cp "$ROOT/target/$TARGET/release/zeroreq" "$APP/Contents/MacOS/zeroreq"
 
 chmod 755 "$APP/Contents/MacOS/zeroreq"
 sed \

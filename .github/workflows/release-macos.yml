@@ -60,7 +60,7 @@ jobs:
             ~/.cargo/git
             ~/.cargo/registry
             target
-          key: macos-universal-${{ hashFiles('Cargo.lock') }}
+          key: macos-arm64-${{ hashFiles('Cargo.lock') }}
 
       - name: Import Developer ID certificate
         env:
@@ -92,7 +92,7 @@ jobs:
           test -n "$identity"
           echo "SIGN_IDENTITY=$identity" >> "$GITHUB_ENV"
 
-      - name: Build signed universal app
+      - name: Build signed Apple Silicon app
         env:
           VERSION: ${{ steps.release.outputs.version }}
           BUILD_VERSION: ${{ github.run_number }}
@@ -109,11 +109,12 @@ jobs:
         shell: bash
         run: |
           codesign --verify --deep --strict --verbose=2 dist/Zeroreq.app
+          test "$(lipo -archs dist/Zeroreq.app/Contents/MacOS/zeroreq)" = "arm64"
           spctl --assess --type execute --verbose=2 dist/Zeroreq.app
           spctl --assess --type open --context context:primary-signature --verbose=2 \
-            "dist/Zeroreq-$VERSION-universal.dmg"
+            "dist/Zeroreq-$VERSION-arm64.dmg"
           xcrun stapler validate dist/Zeroreq.app
-          xcrun stapler validate "dist/Zeroreq-$VERSION-universal.dmg"
+          xcrun stapler validate "dist/Zeroreq-$VERSION-arm64.dmg"
 
       - name: Create updater manifest and checksums
         env:
@@ -121,7 +122,7 @@ jobs:
           TAG: ${{ steps.release.outputs.tag }}
         shell: bash
         run: |
-          zip_name="Zeroreq-$VERSION-universal.zip"
+          zip_name="Zeroreq-$VERSION-arm64.zip"
           zip_sha="$(shasum -a 256 "dist/$zip_name" | awk '{print $1}')"
           jq -n \
             --arg version "$VERSION" \
@@ -133,7 +134,7 @@ jobs:
             cd dist
             shasum -a 256 \
               "$zip_name" \
-              "Zeroreq-$VERSION-universal.dmg" \
+              "Zeroreq-$VERSION-arm64.dmg" \
               zeroreq-update.json \
               > SHA256SUMS
           )
@@ -149,7 +150,7 @@ jobs:
             --verify-tag \
             --generate-notes \
             --title "Zeroreq $VERSION" \
-            "dist/Zeroreq-$VERSION-universal.dmg" \
-            "dist/Zeroreq-$VERSION-universal.zip" \
+            "dist/Zeroreq-$VERSION-arm64.dmg" \
+            "dist/Zeroreq-$VERSION-arm64.zip" \
             dist/zeroreq-update.json \
             dist/SHA256SUMS

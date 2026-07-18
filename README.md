@@ -5,10 +5,10 @@
 Push a semantic version tag such as `v0.1.0` to run the macOS release
 workflow. The version in `crates/zeroreq/Cargo.toml` must match the tag.
 
-The workflow builds a universal Apple Silicon/Intel app, signs it with a
-Developer ID Application certificate, enables the hardened runtime, notarizes
-the app and DMG with Apple, staples the notarization tickets, and publishes the
-ZIP, DMG, update manifest, and SHA-256 checksums to a GitHub release.
+The workflow builds an Apple Silicon (`arm64`) app, signs it with a Developer ID
+Application certificate, enables the hardened runtime, notarizes the app and
+DMG with Apple, staples the notarization tickets, and publishes the ZIP, DMG,
+update manifest, and SHA-256 checksums to a GitHub release.
 
 The repository needs these Actions secrets:
 
