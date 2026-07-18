@@ -8366,7 +8366,7 @@ dependencies = [
 
 [[package]]
 name = "zeroreq"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "gpui",
  "gpui-component",
