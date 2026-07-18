@@ -1,0 +1,3 @@
+[workspace]
+members = ["crates/theme", "crates/zeroreq"]
+resolver = "3"
