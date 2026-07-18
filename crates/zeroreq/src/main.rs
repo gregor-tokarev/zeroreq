@@ -36,14 +36,16 @@ fn main() {
 
     app.run(move |cx: &mut App| {
         gpui_component::init(cx);
+
         zeroreq_theme::init(cx);
-        zeroreq::init(cx);
+        zeroreq::actions::init(cx);
         zeroreq::updater::start_automatic_check(cx);
 
-        let window_options = zeroreq::window_options::use_window_options(cx);
 
         let menus = zeroreq::menu::use_menus(cx);
         cx.set_menus(menus);
+
+        let window_options = zeroreq::window_options::use_window_options(cx);
 
         cx.spawn(async move |cx| {
             cx.open_window(window_options, |window, cx| {

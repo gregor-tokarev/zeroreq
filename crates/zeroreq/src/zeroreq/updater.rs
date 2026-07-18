@@ -2,7 +2,6 @@ use std::{
     env, fs,
     path::{Path, PathBuf},
     process::{Command, Stdio},
-    time::{SystemTime, UNIX_EPOCH},
 };
 
 use gpui::{
@@ -17,6 +16,7 @@ use sha2::{Digest, Sha256};
 const UPDATE_MANIFEST_URL: &str =
     "https://github.com/gregor-tokarev/zeroreq/releases/latest/download/zeroreq-update.json";
 const EXPECTED_TEAM_ID: &str = "P2M3JQ4DR5";
+const CURRENT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[derive(Clone, Debug, Deserialize)]
 struct UpdateManifest {
@@ -40,20 +40,27 @@ struct UpdateWindow {
 
 impl UpdateWindow {
     fn new(manifest: Option<UpdateManifest>, cx: &mut Context<Self>) -> Self {
-        let mut this = Self {
-            status: manifest
-                .map(UpdateStatus::Available)
-                .unwrap_or(UpdateStatus::Checking),
-        };
-        if matches!(this.status, UpdateStatus::Checking) {
-            this.check(cx);
+        match manifest {
+            Some(manifest) => Self {
+                status: UpdateStatus::Available(manifest),
+            },
+            None => {
+                let mut this = Self {
+                    status: UpdateStatus::Checking,
+                };
+                this.check(cx);
+                this
+            }
         }
-        this
+    }
+
+    fn set_status(&mut self, status: UpdateStatus, cx: &mut Context<Self>) {
+        self.status = status;
+        cx.notify();
     }
 
     fn check(&mut self, cx: &mut Context<Self>) {
-        self.status = UpdateStatus::Checking;
-        cx.notify();
+        self.set_status(UpdateStatus::Checking, cx);
 
         let task = cx
             .background_executor()
@@ -64,29 +71,24 @@ impl UpdateWindow {
                 Ok(None) => UpdateStatus::UpToDate,
                 Err(error) => UpdateStatus::Error(error),
             };
-            let _ = this.update(cx, |this, cx| {
-                this.status = status;
-                cx.notify();
-            });
+            let _ = this.update(cx, |this, cx| this.set_status(status, cx));
         })
         .detach();
     }
 
     fn install(&mut self, manifest: UpdateManifest, cx: &mut Context<Self>) {
-        self.status = UpdateStatus::Installing(manifest.version.clone());
-        cx.notify();
+        self.set_status(UpdateStatus::Installing(manifest.version.clone()), cx);
 
         let task = cx
             .background_executor()
             .spawn(async move { download_and_prepare_update(&manifest) });
         cx.spawn(async move |this, cx| match task.await {
             Ok(()) => {
-                cx.update(|cx| cx.quit());
+                let _ = cx.update(|cx| cx.quit());
             }
             Err(error) => {
                 let _ = this.update(cx, |this, cx| {
-                    this.status = UpdateStatus::Error(error);
-                    cx.notify();
+                    this.set_status(UpdateStatus::Error(error), cx)
                 });
             }
         })
@@ -94,10 +96,17 @@ impl UpdateWindow {
     }
 }
 
+fn hint(text: impl IntoElement, cx: &App) -> impl IntoElement {
+    div()
+        .max_w(px(520.))
+        .text_size(px(13.))
+        .text_color(cx.theme().muted_foreground)
+        .child(text)
+}
+
 impl Render for UpdateWindow {
     fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let status = self.status.clone();
-        let mut content = div()
+        let content = div()
             .v_flex()
             .size_full()
             .p_8()
@@ -108,62 +117,41 @@ impl Render for UpdateWindow {
             .gap_4()
             .child(div().text_size(px(24.)).child("Zeroreq Updates"));
 
-        content = match status {
+        match self.status.clone() {
             UpdateStatus::Checking => content.child("Checking for updates…"),
             UpdateStatus::UpToDate => content
-                .child(format!(
-                    "Zeroreq {} is the latest version.",
-                    env!("CARGO_PKG_VERSION")
-                ))
+                .child(format!("Zeroreq {CURRENT_VERSION} is the latest version."))
                 .child(
                     Button::new("check-again")
                         .label("Check Again")
                         .on_click(cx.listener(|this, _, _, cx| this.check(cx))),
                 ),
-            UpdateStatus::Available(manifest) => {
-                let version = manifest.version.clone();
-                content
-                    .child(format!("Zeroreq {version} is available."))
-                    .child(
-                        div()
-                            .text_size(px(13.))
-                            .text_color(cx.theme().muted_foreground)
-                            .child(format!("Installed version: {}", env!("CARGO_PKG_VERSION"))),
-                    )
-                    .child(
-                        Button::new("install-update")
-                            .primary()
-                            .label("Install and Relaunch")
-                            .on_click(cx.listener(move |this, _, _, cx| {
-                                this.install(manifest.clone(), cx)
-                            })),
-                    )
-            }
+            UpdateStatus::Available(manifest) => content
+                .child(format!("Zeroreq {} is available.", manifest.version))
+                .child(hint(format!("Installed version: {CURRENT_VERSION}"), cx))
+                .child(
+                    Button::new("install-update")
+                        .primary()
+                        .label("Install and Relaunch")
+                        .on_click(
+                            cx.listener(move |this, _, _, cx| this.install(manifest.clone(), cx)),
+                        ),
+                ),
             UpdateStatus::Installing(version) => content
                 .child(format!("Downloading and verifying Zeroreq {version}…"))
-                .child(
-                    div()
-                        .text_size(px(13.))
-                        .text_color(cx.theme().muted_foreground)
-                        .child("Zeroreq will relaunch when the update is installed."),
-                ),
+                .child(hint(
+                    "Zeroreq will relaunch when the update is installed.",
+                    cx,
+                )),
             UpdateStatus::Error(error) => content
                 .child("Zeroreq could not update.")
-                .child(
-                    div()
-                        .max_w(px(520.))
-                        .text_size(px(13.))
-                        .text_color(cx.theme().muted_foreground)
-                        .child(error),
-                )
+                .child(hint(error, cx))
                 .child(
                     Button::new("retry-update")
                         .label("Try Again")
                         .on_click(cx.listener(|this, _, _, cx| this.check(cx))),
                 ),
-        };
-
-        content
+        }
     }
 }
 
@@ -222,25 +210,27 @@ pub fn start_automatic_check(cx: &mut App) {
     .detach();
 }
 
+fn curl(args: &[&str]) -> Command {
+    let mut command = Command::new("/usr/bin/curl");
+    command.args(["--fail", "--silent", "--show-error", "--location"]);
+    command.args(args);
+    command
+}
+
 fn check_for_update() -> Result<Option<UpdateManifest>, String> {
-    let output = Command::new("/usr/bin/curl")
-        .args([
-            "--fail",
-            "--silent",
-            "--show-error",
-            "--location",
-            "--connect-timeout",
-            "10",
-            "--max-time",
-            "30",
-            "--header",
-            "Accept: application/json",
-            "--header",
-            "User-Agent: Zeroreq-Updater",
-            UPDATE_MANIFEST_URL,
-        ])
-        .output()
-        .map_err(|error| format!("Could not start curl: {error}"))?;
+    let output = curl(&[
+        "--connect-timeout",
+        "10",
+        "--max-time",
+        "30",
+        "--header",
+        "Accept: application/json",
+        "--header",
+        "User-Agent: Zeroreq-Updater",
+        UPDATE_MANIFEST_URL,
+    ])
+    .output()
+    .map_err(|error| format!("Could not start curl: {error}"))?;
 
     if !output.status.success() {
         let detail = String::from_utf8_lossy(&output.stderr).trim().to_string();
@@ -253,51 +243,33 @@ fn check_for_update() -> Result<Option<UpdateManifest>, String> {
 
     let manifest: UpdateManifest = serde_json::from_slice(&output.stdout)
         .map_err(|error| format!("The update manifest is invalid: {error}"))?;
-    let current = Version::parse(env!("CARGO_PKG_VERSION"))
+    let installed = Version::parse(CURRENT_VERSION)
         .map_err(|error| format!("The installed version is invalid: {error}"))?;
-    let available = Version::parse(manifest.version.trim_start_matches('v'))
+    let released = Version::parse(manifest.version.trim_start_matches('v'))
         .map_err(|error| format!("The released version is invalid: {error}"))?;
 
-    if available > current {
-        Ok(Some(manifest))
-    } else {
-        Ok(None)
-    }
+    Ok((released > installed).then_some(manifest))
 }
 
 fn download_and_prepare_update(manifest: &UpdateManifest) -> Result<(), String> {
     let current_app = current_app_bundle()?;
-    let parent = current_app
+    let install_dir = current_app
         .parent()
         .ok_or_else(|| "The installed app has no parent directory.".to_string())?;
-    if !is_directory_writable(parent) {
+    if !is_directory_writable(install_dir) {
         return Err(format!(
             "{} is not writable. Move Zeroreq to a folder owned by your user and try again.",
-            parent.display()
+            install_dir.display()
         ));
     }
 
-    let unique = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map_err(|error| error.to_string())?
-        .as_nanos();
-    let work_dir = env::temp_dir().join(format!("zeroreq-update-{}-{unique}", std::process::id()));
+    let work_dir = env::temp_dir().join(format!("zeroreq-update-{}", std::process::id()));
+    let _ = fs::remove_dir_all(&work_dir);
     fs::create_dir_all(&work_dir)
         .map_err(|error| format!("Could not create the update directory: {error}"))?;
-    let archive = work_dir.join("Zeroreq.zip");
 
-    let status = Command::new("/usr/bin/curl")
-        .args([
-            "--fail",
-            "--silent",
-            "--show-error",
-            "--location",
-            "--connect-timeout",
-            "15",
-            "--max-time",
-            "600",
-            "--output",
-        ])
+    let archive = work_dir.join("Zeroreq.zip");
+    let status = curl(&["--connect-timeout", "15", "--max-time", "600", "--output"])
         .arg(&archive)
         .arg(&manifest.url)
         .status()
@@ -417,10 +389,10 @@ fi
 fn current_app_bundle() -> Result<PathBuf, String> {
     let executable =
         env::current_exe().map_err(|error| format!("Could not locate Zeroreq: {error}"))?;
+    // Zeroreq.app/Contents/MacOS/zeroreq → Zeroreq.app
     let app = executable
-        .parent()
-        .and_then(Path::parent)
-        .and_then(Path::parent)
+        .ancestors()
+        .nth(3)
         .ok_or_else(|| "Zeroreq is not running from an app bundle.".to_string())?;
     if app.extension().and_then(|value| value.to_str()) != Some("app") {
         return Err("Automatic updates are only available from Zeroreq.app.".into());
@@ -430,13 +402,9 @@ fn current_app_bundle() -> Result<PathBuf, String> {
 
 fn is_directory_writable(directory: &Path) -> bool {
     let probe = directory.join(format!(".zeroreq-write-test-{}", std::process::id()));
-    match fs::write(&probe, []) {
-        Ok(()) => {
-            let _ = fs::remove_file(probe);
-            true
-        }
-        Err(_) => false,
-    }
+    let writable = fs::write(&probe, []).is_ok();
+    let _ = fs::remove_file(&probe);
+    writable
 }
 
 #[cfg(test)]

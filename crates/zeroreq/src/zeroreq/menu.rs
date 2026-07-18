@@ -1,6 +1,6 @@
 use gpui::{App, Menu, MenuItem};
 
-use crate::zeroreq::{About, CheckForUpdates, Quit};
+use crate::zeroreq::actions::{About, CheckForUpdates, Quit};
 
 pub fn use_menus(_: &mut App) -> Vec<Menu> {
     vec![Menu {
