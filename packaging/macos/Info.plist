@@ -6,6 +6,8 @@
     <string>Zeroreq</string>
     <key>CFBundleExecutable</key>
     <string>zeroreq</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
     <key>CFBundleIdentifier</key>
     <string>com.egortokarev.zeroreq</string>
     <key>CFBundleInfoDictionaryVersion</key>

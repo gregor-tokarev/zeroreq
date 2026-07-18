@@ -18,6 +18,7 @@ cargo build --locked --release -p zeroreq --target "$TARGET"
 cp "$ROOT/target/$TARGET/release/zeroreq" "$APP/Contents/MacOS/zeroreq"
 
 chmod 755 "$APP/Contents/MacOS/zeroreq"
+cp "$ROOT/packaging/macos/AppIcon.icns" "$APP/Contents/Resources/AppIcon.icns"
 sed \
   -e "s/__VERSION__/$VERSION/g" \
   -e "s/__BUILD_VERSION__/$BUILD_VERSION/g" \
