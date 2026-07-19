@@ -41,7 +41,6 @@ fn main() {
         zeroreq::actions::init(cx);
         zeroreq::updater::start_automatic_check(cx);
 
-
         let menus = zeroreq::menu::use_menus(cx);
         cx.set_menus(menus);
 

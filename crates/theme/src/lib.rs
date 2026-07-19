@@ -31,7 +31,6 @@ const EMBEDDED_THEME_SETS: &[&str] = &[
     include_str!("../themes/twilight.json"),
 ];
 
-
 pub fn init(cx: &mut App) {
     let registry = ThemeRegistry::global_mut(cx);
 
