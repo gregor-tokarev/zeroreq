@@ -1,5 +1,6 @@
 use gpui::*;
 use gpui_component::{button::*, *};
+use std::sync::Arc;
 
 mod zeroreq;
 
@@ -32,7 +33,15 @@ impl Render for HelloWorld {
 }
 
 fn main() {
-    let app = gpui_platform::application();
+    let user_agent = format!(
+        "Zeroreq/{} ({}; {})",
+        env!("CARGO_PKG_VERSION"),
+        std::env::consts::OS,
+        std::env::consts::ARCH
+    );
+    let http_client = reqwest_client::ReqwestClient::user_agent(&user_agent)
+        .expect("Failed to initialize the HTTP client");
+    let app = gpui_platform::application().with_http_client(Arc::new(http_client));
 
     app.run(move |cx: &mut App| {
         gpui_component::init(cx);

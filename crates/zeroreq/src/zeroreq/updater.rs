@@ -2,16 +2,23 @@ use std::{
     env, fs,
     path::{Path, PathBuf},
     process::{Command, Stdio},
+    sync::Arc,
 };
 
 use gpui::{
     App, AppContext, Context, IntoElement, ParentElement, Render, Size, Styled, TitlebarOptions,
-    Window, WindowBounds, WindowKind, WindowOptions, div, px,
+    Window, WindowBounds, WindowKind, WindowOptions, div,
+    http_client::{AsyncBody, HttpClient},
+    px,
 };
 use gpui_component::{ActiveTheme as _, StyledExt, button::*};
 use semver::Version;
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
+use smol::{
+    fs::File,
+    io::{AsyncReadExt, AsyncWriteExt},
+};
 
 const UPDATE_MANIFEST_URL: &str =
     "https://github.com/gregor-tokarev/zeroreq/releases/latest/download/zeroreq-update.json";
@@ -62,11 +69,9 @@ impl UpdateWindow {
     fn check(&mut self, cx: &mut Context<Self>) {
         self.set_status(UpdateStatus::Checking, cx);
 
-        let task = cx
-            .background_executor()
-            .spawn(async move { check_for_update() });
+        let http_client = cx.http_client();
         cx.spawn(async move |this, cx| {
-            let status = match task.await {
+            let status = match check_for_update(http_client).await {
                 Ok(Some(manifest)) => UpdateStatus::Available(manifest),
                 Ok(None) => UpdateStatus::UpToDate,
                 Err(error) => UpdateStatus::Error(error),
@@ -79,9 +84,10 @@ impl UpdateWindow {
     fn install(&mut self, manifest: UpdateManifest, cx: &mut Context<Self>) {
         self.set_status(UpdateStatus::Installing(manifest.version.clone()), cx);
 
+        let http_client = cx.http_client();
         let task = cx
             .background_executor()
-            .spawn(async move { download_and_prepare_update(&manifest) });
+            .spawn(async move { download_and_prepare_update(&manifest, http_client).await });
         cx.spawn(async move |this, cx| match task.await {
             Ok(()) => {
                 let _ = cx.update(|cx| cx.quit());
@@ -199,49 +205,40 @@ pub fn start_automatic_check(cx: &mut App) {
         return;
     }
 
-    let task = cx
-        .background_executor()
-        .spawn(async move { check_for_update() });
+    let http_client = cx.http_client();
     cx.spawn(async move |cx| {
-        if let Ok(Some(manifest)) = task.await {
+        if let Ok(Some(manifest)) = check_for_update(http_client).await {
             cx.update(|cx| open_update_window_with_manifest(Some(manifest), cx));
         }
     })
     .detach();
 }
 
-fn curl(args: &[&str]) -> Command {
-    let mut command = Command::new("/usr/bin/curl");
-    command.args(["--fail", "--silent", "--show-error", "--location"]);
-    command.args(args);
-    command
-}
+async fn check_for_update(
+    http_client: Arc<dyn HttpClient>,
+) -> Result<Option<UpdateManifest>, String> {
+    let mut response = http_client
+        .get(UPDATE_MANIFEST_URL, AsyncBody::empty(), true)
+        .await
+        .map_err(|error| format!("Could not check for updates: {error}"))?;
+    let status = response.status();
+    let mut body = Vec::new();
+    response
+        .body_mut()
+        .read_to_end(&mut body)
+        .await
+        .map_err(|error| format!("Could not read the update manifest: {error}"))?;
 
-fn check_for_update() -> Result<Option<UpdateManifest>, String> {
-    let output = curl(&[
-        "--connect-timeout",
-        "10",
-        "--max-time",
-        "30",
-        "--header",
-        "Accept: application/json",
-        "--header",
-        "User-Agent: Zeroreq-Updater",
-        UPDATE_MANIFEST_URL,
-    ])
-    .output()
-    .map_err(|error| format!("Could not start curl: {error}"))?;
-
-    if !output.status.success() {
-        let detail = String::from_utf8_lossy(&output.stderr).trim().to_string();
+    if !status.is_success() {
+        let detail = String::from_utf8_lossy(&body).trim().to_string();
         return Err(if detail.is_empty() {
-            "GitHub did not return an update manifest.".into()
+            format!("GitHub returned {status} for the update manifest.")
         } else {
             detail
         });
     }
 
-    let manifest: UpdateManifest = serde_json::from_slice(&output.stdout)
+    let manifest: UpdateManifest = serde_json::from_slice(&body)
         .map_err(|error| format!("The update manifest is invalid: {error}"))?;
     let installed = Version::parse(CURRENT_VERSION)
         .map_err(|error| format!("The installed version is invalid: {error}"))?;
@@ -251,7 +248,10 @@ fn check_for_update() -> Result<Option<UpdateManifest>, String> {
     Ok((released > installed).then_some(manifest))
 }
 
-fn download_and_prepare_update(manifest: &UpdateManifest) -> Result<(), String> {
+async fn download_and_prepare_update(
+    manifest: &UpdateManifest,
+    http_client: Arc<dyn HttpClient>,
+) -> Result<(), String> {
     let current_app = current_app_bundle()?;
     let install_dir = current_app
         .parent()
@@ -269,14 +269,7 @@ fn download_and_prepare_update(manifest: &UpdateManifest) -> Result<(), String> 
         .map_err(|error| format!("Could not create the update directory: {error}"))?;
 
     let archive = work_dir.join("Zeroreq.zip");
-    let status = curl(&["--connect-timeout", "15", "--max-time", "600", "--output"])
-        .arg(&archive)
-        .arg(&manifest.url)
-        .status()
-        .map_err(|error| format!("Could not download the update: {error}"))?;
-    if !status.success() {
-        return Err("GitHub did not return the update archive.".into());
-    }
+    download_update(&manifest.url, &archive, http_client).await?;
 
     verify_sha256(&archive, &manifest.sha256)?;
 
@@ -293,6 +286,57 @@ fn download_and_prepare_update(manifest: &UpdateManifest) -> Result<(), String> 
     let new_app = work_dir.join("Zeroreq.app");
     verify_apple_signature(&new_app)?;
     launch_installer(&current_app, &new_app, &work_dir)
+}
+
+async fn download_update(
+    url: &str,
+    destination: &Path,
+    http_client: Arc<dyn HttpClient>,
+) -> Result<(), String> {
+    let mut response = http_client
+        .get(url, AsyncBody::empty(), true)
+        .await
+        .map_err(|error| format!("Could not download the update: {error}"))?;
+    let status = response.status();
+    if !status.is_success() {
+        let mut body = Vec::new();
+        response
+            .body_mut()
+            .read_to_end(&mut body)
+            .await
+            .map_err(|error| format!("Could not read GitHub's error response: {error}"))?;
+        let detail = String::from_utf8_lossy(&body).trim().to_string();
+        return Err(if detail.is_empty() {
+            format!("GitHub returned {status} for the update archive.")
+        } else {
+            detail
+        });
+    }
+
+    let mut destination = File::create(destination)
+        .await
+        .map_err(|error| format!("Could not create the update archive: {error}"))?;
+    let mut buffer = [0_u8; 64 * 1024];
+    loop {
+        let bytes_read = response
+            .body_mut()
+            .read(&mut buffer)
+            .await
+            .map_err(|error| format!("Could not read the update download: {error}"))?;
+        if bytes_read == 0 {
+            break;
+        }
+        destination
+            .write_all(&buffer[..bytes_read])
+            .await
+            .map_err(|error| format!("Could not write the update archive: {error}"))?;
+    }
+    destination
+        .flush()
+        .await
+        .map_err(|error| format!("Could not finish writing the update archive: {error}"))?;
+
+    Ok(())
 }
 
 fn verify_sha256(path: &Path, expected: &str) -> Result<(), String> {
