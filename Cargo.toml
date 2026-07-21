@@ -1,7 +1,14 @@
 [workspace]
-members = ["crates/collection", "crates/environment", "crates/theme", "crates/zeroreq"]
+members = ["crates/collection", "crates/environment", "crates/theme", "crates/workspace", "crates/zeroreq"]
 resolver = "3"
 
 [workspace.dependencies]
 anyhow = "1"
+gpui = { git = "https://github.com/zed-industries/zed" }
+gpui-component = { git = "https://github.com/longbridge/gpui-component" }
+gpui_platform = { git = "https://github.com/zed-industries/zed", features = ["font-kit"] }
+objc2 = "0.6"
+objc2-app-kit = { version = "0.3.2", default-features = false, features = ["NSButton", "NSControl", "NSResponder", "NSView", "NSWindow"] }
+raw-window-handle = "0.6"
+reqwest_client = { git = "https://github.com/zed-industries/zed" }
 thiserror = "2"
