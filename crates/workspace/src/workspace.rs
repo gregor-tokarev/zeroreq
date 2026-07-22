@@ -15,7 +15,7 @@ impl Render for Layout {
             .child(
                 div().flex_1().min_h_0().child(
                     h_resizable("main_split")
-                        .child(resizable_panel().size(px(200.)).child(Sidebar))
+                        .child(resizable_panel().size_range(px(200.)..px(400.)).child(Sidebar))
                         .child(div().child("right panel").into_any_element()),
                 ),
             )
