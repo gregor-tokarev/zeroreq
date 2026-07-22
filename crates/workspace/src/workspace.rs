@@ -1,4 +1,4 @@
-use crate::layout::{sidebar::Sidebar, top_panel::TopPanel};
+use crate::layout::{bottom_panel::BottomPanel, sidebar::Sidebar, top_panel::TopPanel};
 use gpui::*;
 use gpui_component::{
     resizable::{h_resizable, resizable_panel},
@@ -8,7 +8,7 @@ use gpui_component::{
 struct Layout;
 
 impl Render for Layout {
-    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
         v_flex()
             .size_full()
             .child(TopPanel)
@@ -19,17 +19,7 @@ impl Render for Layout {
                         .child(div().child("right panel").into_any_element()),
                 ),
             )
-            .child(
-                div()
-                    .border_t_1()
-                    .border_color(cx.theme().border)
-                    .flex()
-                    .flex_none()
-                    .items_center()
-                    .h_8()
-                    .bg(cx.theme().background.darken(0.20))
-                    .child("bottom panel")
-            )
+            .child(BottomPanel)
     }
 }
 
