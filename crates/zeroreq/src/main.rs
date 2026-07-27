@@ -24,6 +24,8 @@ fn main() {
         let menus = zeroreq::menu::use_menus(cx);
         cx.set_menus(menus);
 
-        workspace::init(cx);
+        let collections = collection::CollectionRegistry::load()
+            .expect("Failed to load collections from ~/.zeroreq/collections");
+        workspace::init(collections, cx);
     });
 }

@@ -4,6 +4,7 @@ version = "0.1.2"
 edition = "2024"
 
 [dependencies]
+collection = { path = "../collection" }
 gpui.workspace = true
 gpui-component.workspace = true
 gpui_platform.workspace = true
