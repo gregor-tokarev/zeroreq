@@ -1,6 +1,6 @@
 APP := target/debug/Zeroreq.app
 
-.PHONY: bundle run release clean-bundle
+.PHONY: bundle run dev release clean-bundle
 
 # Assemble a debug .app bundle so dev runs get the real bundle identity
 # (icon, name, Info.plist) instead of the bare-executable treatment.
@@ -20,6 +20,10 @@ bundle:
 # Bundle and run in the foreground with logs in the terminal.
 run: bundle
 	$(APP)/Contents/MacOS/zeroreq
+
+# Rebuild the app bundle and restart it whenever project files change.
+dev:
+	+@./scripts/dev.sh
 
 release:
 	./scripts/build-macos.sh
