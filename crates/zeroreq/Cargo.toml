@@ -8,6 +8,7 @@ collection = { path = "../collection" }
 gpui.workspace = true
 gpui-component.workspace = true
 gpui_platform.workspace = true
+keybindings_service = { path = "../keybindings_service" }
 reqwest_client.workspace = true
 semver = "1"
 serde = { version = "1", features = ["derive"] }
