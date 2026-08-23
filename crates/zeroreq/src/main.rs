@@ -16,6 +16,7 @@ fn main() {
 
     app.run(move |cx: &mut App| {
         gpui_component::init(cx);
+        keybindings_service::init(cx);
 
         zeroreq_theme::init(cx);
         zeroreq::actions::init(cx);
