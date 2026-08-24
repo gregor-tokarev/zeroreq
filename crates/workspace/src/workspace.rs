@@ -70,8 +70,9 @@ pub fn init(collections: CollectionRegistry, cx: &mut App) {
 mod tests {
     use super::{Layout, on_toggle_sidebar};
     use crate::actions::ToggleLeftSidebar;
+    use crate::layout::bottom_panel::TOGGLE_SIDEBAR_BUTTON;
     use collection::CollectionRegistry;
-    use gpui::TestAppContext;
+    use gpui::{Modifiers, TestAppContext};
     use std::sync::Arc;
 
     #[gpui::test]
@@ -105,9 +106,10 @@ mod tests {
         cx.simulate_keystrokes("cmd-b");
         assert!(sidebar_visible(cx));
 
-        // The bottom panel button dispatches the same action.
-        cx.dispatch_action(ToggleLeftSidebar);
-        cx.run_until_parked();
+        let button_bounds = cx
+            .debug_bounds(TOGGLE_SIDEBAR_BUTTON)
+            .expect("toggle-sidebar button should be rendered");
+        cx.simulate_click(button_bounds.center(), Modifiers::default());
         assert!(!sidebar_visible(cx));
     }
 }

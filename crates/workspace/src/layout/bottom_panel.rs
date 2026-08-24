@@ -3,6 +3,8 @@ use gpui_component::{ActiveTheme as _, Colorize as _, IconNamed, Sizable as _, b
 
 use crate::actions::ToggleLeftSidebar;
 
+pub(crate) const TOGGLE_SIDEBAR_BUTTON: &str = "toggle-sidebar";
+
 enum SidebarIcon {
     Visible,
     Hidden,
@@ -47,14 +49,19 @@ impl RenderOnce for BottomPanel {
             .px_2()
             .bg(cx.theme().background.darken(0.20))
             .child(
-                Button::new("toggle-sidebar")
-                    .ghost()
-                    .small()
-                    .icon(icon)
-                    .tooltip_with_action("Toggle Sidebar", &ToggleLeftSidebar, None)
-                    .on_click(|_, window, cx| {
-                        window.dispatch_action(ToggleLeftSidebar.boxed_clone(), cx);
-                    }),
+                div()
+                    .flex_none()
+                    .debug_selector(|| TOGGLE_SIDEBAR_BUTTON.to_string())
+                    .child(
+                        Button::new(TOGGLE_SIDEBAR_BUTTON)
+                            .ghost()
+                            .small()
+                            .icon(icon)
+                            .tooltip_with_action("Toggle Sidebar", &ToggleLeftSidebar, None)
+                            .on_click(|_, window, cx| {
+                                window.dispatch_action(ToggleLeftSidebar.boxed_clone(), cx);
+                            }),
+                    ),
             )
             .child("bottom panel")
     }
