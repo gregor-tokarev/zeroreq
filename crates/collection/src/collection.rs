@@ -58,23 +58,6 @@ impl Collection {
     }
 }
 
-fn load_entry(path: &Path, excluded_path: Option<&Path>) -> Result<Entry, CollectionLoadError> {
-    let metadata = fs::metadata(path).map_err(|source| CollectionLoadError::Read {
-        path: path.to_path_buf(),
-        source,
-    })?;
-
-    if metadata.is_dir() {
-        load_directory(path, excluded_path).map(Entry::Directory)
-    } else if metadata.is_file() {
-        load_file(path).map(Entry::File)
-    } else {
-        Err(CollectionLoadError::UnsupportedPath {
-            path: path.to_path_buf(),
-        })
-    }
-}
-
 fn load_directory(
     path: &Path,
     excluded_path: Option<&Path>,
@@ -109,14 +92,15 @@ fn load_directory(
             })?
             .file_type();
 
-        if file_type.is_dir()
-            || (file_type.is_file()
-                && child_path
-                    .extension()
-                    .and_then(|extension| extension.to_str())
-                    == Some("toml"))
+        if file_type.is_dir() {
+            entries.push(Entry::Directory(load_directory(&child_path, excluded_path)?));
+        } else if file_type.is_file()
+            && child_path
+                .extension()
+                .and_then(|extension| extension.to_str())
+                == Some("toml")
         {
-            entries.push(load_entry(&child_path, excluded_path)?);
+            entries.push(Entry::File(load_file(&child_path)?));
         }
     }
 
