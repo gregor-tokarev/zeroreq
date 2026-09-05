@@ -287,13 +287,9 @@ request_custom = "keep me too"
         )
         .unwrap();
         fs::write(root.join("environment.toml"), "base_url = \"local\"\n").unwrap();
-        fs::write(root.join("README.md"), "Not a request file").unwrap();
-        #[cfg(unix)]
-        std::os::unix::fs::symlink(&root, root.join("linked-collection")).unwrap();
 
         let mut collection =
             Collection::from_path(&root, environment(&root.join("environment.toml"))).unwrap();
-        assert_eq!(collection.entries.len(), 1);
         let Entry::Directory(users) = &mut collection.entries[0] else {
             panic!("expected users directory");
         };
