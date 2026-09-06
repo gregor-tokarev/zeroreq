@@ -63,19 +63,6 @@ fn invalid_replacement_leaves_the_current_binding_active() {
     );
 }
 
-#[test]
-fn removes_a_managed_binding() {
-    let mut app = TestApp::new();
-
-    app.update(|cx| {
-        set_binding("cmd-q", FirstAction, None, cx).unwrap();
-        assert!(remove_binding::<FirstAction>(cx));
-        assert!(!remove_binding::<FirstAction>(cx));
-    });
-
-    assert!(actions_for("cmd-q", &app).is_empty());
-}
-
 fn register_commands(cx: &mut App) {
     register(
         FirstAction,

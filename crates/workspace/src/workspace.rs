@@ -153,7 +153,6 @@ pub fn init(collections: CollectionRegistry, general_settings: AnyView, cx: &mut
     on_toggle_sidebar(&layout, cx);
 
     cx.open_window(window_options, move |window, cx| {
-        crate::window_options::use_compact_window_controls(window);
         on_open_settings(&layout, window.window_handle(), cx);
 
         cx.new(|cx| Root::new(layout.clone(), window, cx).bg(cx.theme().background))

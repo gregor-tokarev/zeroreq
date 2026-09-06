@@ -274,23 +274,6 @@ pub fn set_binding<A: Action>(
     })
 }
 
-/// Removes the binding managed by this service for an action.
-pub fn remove_binding<A: Action>(cx: &mut App) -> bool {
-    if !cx.has_global::<KeybindingsService>() {
-        return false;
-    }
-
-    cx.update_global::<KeybindingsService, _>(|service, cx| {
-        let Some(binding) = service.bindings.remove(&TypeId::of::<A>()) else {
-            return false;
-        };
-
-        cx.bind_keys([binding.unbind()]);
-
-        true
-    })
-}
-
 pub fn binding_for<A: Action>(cx: &App) -> Option<&Binding> {
     cx.try_global::<KeybindingsService>()?
         .bindings
