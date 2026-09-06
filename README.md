@@ -22,6 +22,11 @@ or remove the shortcut. Each row also has a Remove button that works without
 opening the recorder. You can reset individual commands or all commands to their defaults.
 
 Changes take effect immediately and save to `~/.zeroreq/keybindings.json`.
+If a saved shortcut conflicts with another binding at startup, the first registered
+binding stays active and the conflicting command appears unassigned with an error
+in Settings. Record a replacement or reset it to resolve the conflict. Startup
+leaves the saved file unchanged.
+
 New application commands should use `keybindings_service::register` to appear in
 Settings with their label, description, category, and default shortcut.
 

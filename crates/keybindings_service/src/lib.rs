@@ -32,6 +32,7 @@ struct RegisteredCommand {
     category: &'static str,
     default_binding: Option<Binding>,
     context: Option<&'static str>,
+    binding_error: Option<String>,
 }
 
 /// A command shown in Settings, including commands without a shortcut.
@@ -44,11 +45,12 @@ pub struct Command {
 
     pub binding: Option<Binding>,
     pub default_binding: Option<Binding>,
+    pub binding_error: Option<String>,
 }
 
 impl Command {
     pub fn is_modified(&self) -> bool {
-        self.binding != self.default_binding
+        self.binding_error.is_some() || self.binding != self.default_binding
     }
 }
 
@@ -90,6 +92,9 @@ pub fn storage_error(cx: &App) -> Option<&str> {
 }
 
 /// Register each user-facing command once, with its built-in shortcut.
+/// Register fixed bindings first. If a resolved shortcut conflicts with an
+/// earlier binding, leave this command unassigned and report the error in
+/// Settings. Keep the saved value until the user repairs or resets it.
 pub fn register<A: Action>(
     action: A,
     label: &'static str,
@@ -111,13 +116,21 @@ pub fn register<A: Action>(
             return Ok(());
         }
 
-        let binding = match service.overrides.get(id) {
+        let mut binding = match service.overrides.get(id) {
             Some(keys) => keys
                 .as_deref()
                 .map(|keys| Binding::new(keys, context))
                 .transpose()?,
             None => default_binding.clone(),
         };
+        let binding_error = binding
+            .as_ref()
+            .and_then(|binding| service.check_conflict(id, binding).err())
+            .map(|error| format!("Shortcut disabled: {error}"));
+        if binding_error.is_some() {
+            binding = None;
+        }
+
         let command = RegisteredCommand {
             action: Box::new(action),
             label,
@@ -125,10 +138,11 @@ pub fn register<A: Action>(
             category,
             default_binding,
             context,
+            binding_error,
         };
 
+        service.replace_binding(command.action.boxed_clone(), binding, cx)?;
         service.commands.insert(id, command);
-        service.apply(id, binding, cx)?;
 
         Ok(())
     })
@@ -152,6 +166,7 @@ pub fn commands(cx: &App) -> Vec<Command> {
                 .get(&command.action.as_any().type_id())
                 .map(|b| b.binding.clone()),
             default_binding: command.default_binding.clone(),
+            binding_error: command.binding_error.clone(),
         })
         .collect()
 }
@@ -297,7 +312,10 @@ impl KeybindingsService {
             .action
             .boxed_clone();
 
-        self.replace_binding(action, binding, cx)
+        self.replace_binding(action, binding, cx)?;
+        self.commands.get_mut(id).unwrap().binding_error = None;
+
+        Ok(())
     }
 
     fn replace_binding(

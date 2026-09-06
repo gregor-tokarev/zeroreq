@@ -86,7 +86,10 @@ impl KeybindingsPage {
             .recording
             .as_ref()
             .filter(|recording| recording.command.id == id);
-        let error = recording.and_then(|recording| recording.error.as_ref());
+        let error = match recording {
+            Some(recording) => recording.error.as_ref(),
+            None => command.binding_error.as_ref(),
+        };
 
         h_flex()
             .debug_selector(move || format!("keybinding-row-{id}"))

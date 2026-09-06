@@ -154,6 +154,188 @@ fn overrides_and_removed_shortcuts_survive_restart() {
 }
 
 #[test]
+fn startup_rejects_saved_conflicts_and_allows_repair() {
+    for (first_keys, other_keys) in [
+        ("cmd-k", "super-k"),
+        ("cmd-k", "cmd-k cmd-c"),
+        ("cmd-k cmd-c", "cmd-k"),
+    ] {
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("keybindings.json");
+        let saved = serde_json::json!({
+            FirstAction::name_for_type(): first_keys,
+            OtherAction::name_for_type(): other_keys,
+        })
+        .to_string();
+        std::fs::write(&path, &saved).unwrap();
+
+        let mut app = TestApp::new();
+        app.update(|cx| {
+            load_overrides(path.clone(), cx).unwrap();
+            register_commands(cx);
+
+            let command = commands(cx)
+                .into_iter()
+                .find(|command| command.id == OtherAction::name_for_type())
+                .unwrap();
+            assert!(command.binding.is_none());
+            assert!(
+                command
+                    .binding_error
+                    .as_ref()
+                    .unwrap()
+                    .contains("First command")
+            );
+            assert!(command.is_modified());
+        });
+
+        assert_eq!(
+            actions_for(first_keys, &app),
+            vec![FirstAction::name_for_type()]
+        );
+        assert!(!actions_for(other_keys, &app).contains(&OtherAction::name_for_type()));
+        assert_eq!(std::fs::read_to_string(&path).unwrap(), saved);
+
+        app.update(|cx| {
+            // A failed edit must retain the startup error. Resetting to a free
+            // default repairs the shortcut without requiring a restart.
+            assert!(set_override(OtherAction::name_for_type(), Some(first_keys), cx).is_err());
+            assert!(
+                commands(cx)
+                    .iter()
+                    .any(|command| command.binding_error.is_some())
+            );
+
+            reset_command(OtherAction::name_for_type(), cx).unwrap();
+            assert!(
+                commands(cx)
+                    .iter()
+                    .all(|command| command.binding_error.is_none())
+            );
+        });
+
+        let mut restarted = TestApp::new();
+        restarted.update(|cx| {
+            load_overrides(path.clone(), cx).unwrap();
+            register_commands(cx);
+            assert!(
+                commands(cx)
+                    .iter()
+                    .all(|command| command.binding_error.is_none())
+            );
+        });
+
+        assert_eq!(
+            actions_for(first_keys, &restarted),
+            vec![FirstAction::name_for_type()]
+        );
+        assert_eq!(
+            actions_for("cmd-b", &restarted),
+            vec![OtherAction::name_for_type()]
+        );
+    }
+}
+
+#[test]
+fn startup_checks_defaults_against_saved_shortcuts_and_preserves_valid_swaps() {
+    for swapped in [false, true] {
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("keybindings.json");
+        let mut saved = serde_json::json!({FirstAction::name_for_type(): "cmd-b"});
+        if swapped {
+            saved[OtherAction::name_for_type()] = "cmd-q".into();
+        }
+
+        std::fs::write(&path, saved.to_string()).unwrap();
+
+        let mut app = TestApp::new();
+        app.update(|cx| {
+            load_overrides(path, cx).unwrap();
+            register_commands(cx);
+            assert_eq!(
+                commands(cx)
+                    .iter()
+                    .any(|command| command.binding_error.is_some()),
+                !swapped
+            );
+        });
+
+        assert_eq!(
+            actions_for("cmd-b", &app),
+            vec![FirstAction::name_for_type()]
+        );
+        assert_eq!(
+            actions_for("cmd-q", &app),
+            if swapped {
+                vec![OtherAction::name_for_type()]
+            } else {
+                vec![]
+            },
+        );
+
+        app.update(|cx| {
+            reset_all(cx).unwrap();
+            assert!(
+                commands(cx)
+                    .iter()
+                    .all(|command| command.binding_error.is_none())
+            );
+        });
+
+        assert_eq!(
+            actions_for("cmd-q", &app),
+            vec![FirstAction::name_for_type()]
+        );
+        assert_eq!(
+            actions_for("cmd-b", &app),
+            vec![OtherAction::name_for_type()]
+        );
+    }
+}
+
+#[test]
+fn startup_keeps_fixed_shortcuts_and_can_reset_a_disabled_unassigned_command() {
+    let directory = tempfile::tempdir().unwrap();
+    let path = directory.path().join("keybindings.json");
+    std::fs::write(
+        &path,
+        serde_json::json!({FirstAction::name_for_type(): "cmd-q"}).to_string(),
+    )
+    .unwrap();
+
+    let mut app = TestApp::new();
+    app.update(|cx| {
+        load_overrides(path.clone(), cx).unwrap();
+        set_binding("cmd-q", OtherAction, None, cx).unwrap();
+        register(
+            FirstAction,
+            "First command",
+            "",
+            "Workspace",
+            None,
+            None,
+            cx,
+        )
+        .unwrap();
+
+        let command = &commands(cx)[0];
+        assert!(command.binding.is_none());
+        assert!(command.binding_error.is_some());
+        assert!(command.is_modified());
+
+        reset_command(FirstAction::name_for_type(), cx).unwrap();
+        assert!(commands(cx)[0].binding_error.is_none());
+        assert!(!commands(cx)[0].is_modified());
+    });
+
+    assert_eq!(
+        actions_for("cmd-q", &app),
+        vec![OtherAction::name_for_type()]
+    );
+    assert!(storage::load(&path).unwrap().is_empty());
+}
+
+#[test]
 fn rejects_conflicts_including_aliases_and_chord_prefixes() {
     let mut app = TestApp::new();
 
