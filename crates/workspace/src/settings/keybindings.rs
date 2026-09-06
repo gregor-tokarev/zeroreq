@@ -36,18 +36,14 @@ impl KeybindingsPage {
         let mut subscriptions = vec![search_subscription];
         subscriptions.extend(Self::recorder_subscriptions(&recorder_scope, window, cx));
 
-        let this = Self {
+        Self {
             search,
             recorder_focus: cx.focus_handle(),
             recorder_scope,
             recording: None,
             error: None,
             _subscriptions: subscriptions,
-        };
-
-        this.focus_search(window, cx);
-
-        this
+        }
     }
 
     pub(super) fn focus_search(&self, window: &mut Window, cx: &mut Context<Self>) {

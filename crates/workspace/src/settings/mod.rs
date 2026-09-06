@@ -55,16 +55,12 @@ impl Settings {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Self {
-        let this = Self {
+        Self {
             page: SettingsPage::General,
             general: cx.new(|cx| GeneralSettings::new(updater, cx)),
             keybindings: cx.new(|cx| KeybindingsPage::new(window, cx)),
             focus_handle: cx.focus_handle(),
-        };
-
-        this.focus(window, cx);
-
-        this
+        }
     }
 
     pub(crate) fn focus(&self, window: &mut Window, cx: &mut Context<Self>) {

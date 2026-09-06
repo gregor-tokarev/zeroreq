@@ -6,14 +6,17 @@ use gpui_component::{
     ActiveTheme as _, StyledExt as _, button::*, scroll::ScrollableElement as _, v_flex,
 };
 
-#[derive(IntoElement)]
 pub struct Sidebar {
     collections: Arc<CollectionRegistry>,
+    scroll_handle: ScrollHandle,
 }
 
 impl Sidebar {
     pub fn new(collections: Arc<CollectionRegistry>) -> Self {
-        Self { collections }
+        Self {
+            collections,
+            scroll_handle: ScrollHandle::new(),
+        }
     }
 
     fn empty_state(cx: &App) -> AnyElement {
@@ -99,18 +102,26 @@ impl Sidebar {
     }
 }
 
-impl RenderOnce for Sidebar {
-    fn render(self, _: &mut Window, cx: &mut App) -> impl IntoElement {
+impl Render for Sidebar {
+    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         if self.collections.is_empty() {
             return Self::empty_state(cx);
         }
 
         div()
+            .id("sidebar-scroll")
             .v_flex()
             .size_full()
-            .overflow_y_scrollbar()
-            .py_2()
-            .children(self.collections.collections().iter().map(Self::collection))
+            .overflow_y_scroll()
+            .track_scroll(&self.scroll_handle)
+            .vertical_scrollbar(&self.scroll_handle)
+            .child(
+                v_flex()
+                    .w_full()
+                    .flex_none()
+                    .py_2()
+                    .children(self.collections.collections().iter().map(Self::collection)),
+            )
             .into_any_element()
     }
 }

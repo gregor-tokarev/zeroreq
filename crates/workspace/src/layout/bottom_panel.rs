@@ -20,20 +20,25 @@ impl IconNamed for SidebarIcon {
     }
 }
 
-#[derive(IntoElement)]
 pub struct BottomPanel {
-    sidebar_visible: bool,
+    sidebar_visible: Entity<bool>,
+    _sidebar_visibility_subscription: Subscription,
 }
 
 impl BottomPanel {
-    pub fn new(sidebar_visible: bool) -> Self {
-        Self { sidebar_visible }
+    pub fn new(sidebar_visible: Entity<bool>, cx: &mut Context<Self>) -> Self {
+        let subscription = cx.observe(&sidebar_visible, |_, _, cx| cx.notify());
+
+        Self {
+            sidebar_visible,
+            _sidebar_visibility_subscription: subscription,
+        }
     }
 }
 
-impl RenderOnce for BottomPanel {
-    fn render(self, _: &mut Window, cx: &mut App) -> impl IntoElement {
-        let icon = if self.sidebar_visible {
+impl Render for BottomPanel {
+    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let icon = if *self.sidebar_visible.read(cx) {
             SidebarIcon::Visible
         } else {
             SidebarIcon::Hidden
