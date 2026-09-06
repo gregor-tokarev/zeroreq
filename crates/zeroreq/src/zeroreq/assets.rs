@@ -10,7 +10,11 @@ const LAYOUT_SIDEBAR_FILLED: &[u8] = include_bytes!("../../assets/icons/layout-s
 const LAYOUT_SIDEBAR_INACTIVE: &[u8] =
     include_bytes!("../../assets/icons/layout-sidebar-inactive.svg");
 
-const LOCAL_ICONS: [(&str, &[u8]); 2] = [
+const LOCAL_ICONS: [(&str, &[u8]); 3] = [
+    (
+        "icons/keyboard.svg",
+        include_bytes!("../../assets/icons/keyboard.svg"),
+    ),
     ("icons/layout-sidebar-filled.svg", LAYOUT_SIDEBAR_FILLED),
     ("icons/layout-sidebar-inactive.svg", LAYOUT_SIDEBAR_INACTIVE),
 ];
@@ -20,6 +24,7 @@ impl AssetSource for Assets {
         if let Some((_, bytes)) = LOCAL_ICONS.iter().find(|(icon_path, _)| *icon_path == path) {
             return Ok(Some(Cow::Borrowed(*bytes)));
         }
+
         gpui_component_assets::Assets.load(path)
     }
 
@@ -32,6 +37,7 @@ impl AssetSource for Assets {
                 .filter(|icon_path| icon_path.starts_with(path))
                 .map(SharedString::from),
         );
+
         Ok(paths)
     }
 }

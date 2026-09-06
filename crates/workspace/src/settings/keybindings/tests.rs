@@ -1,0 +1,418 @@
+use super::{KeybindingsPage, matches_search};
+use crate::actions::{CloseSettings, OpenSettings, ToggleLeftSidebar};
+use gpui::{
+    Action, AppContext as _, Context, Entity, Global, InteractiveElement as _, IntoElement,
+    Keystroke, Modifiers, ParentElement as _, Render, Styled as _, TestAppContext,
+    VisualTestContext, Window, actions, div, px,
+};
+use keybindings_service as keybindings;
+
+actions!(settings_tests, [Quit]);
+
+#[derive(Default)]
+struct QuitCount(usize);
+
+impl Global for QuitCount {}
+
+// Root::new in the component dependency currently requires a native macOS
+// window. Host the real command rows without the search input, whose blur
+// handler requires Root. This exercises row layout, clicks, and key dispatch.
+struct RecorderHarness {
+    page: Entity<KeybindingsPage>,
+    outside: gpui::FocusHandle,
+    width: gpui::Pixels,
+}
+
+impl Render for RecorderHarness {
+    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        self.page.update(cx, |page, cx| {
+            let mut commands = keybindings::commands(cx);
+            commands.sort_by_key(|command| command.label);
+
+            gpui_component::v_flex()
+                .w(self.width)
+                .child(div().id("outside-recorder").track_focus(&self.outside))
+                .children(
+                    commands
+                        .iter()
+                        .map(|command| page.render_command(command, self.width < px(680.), cx)),
+                )
+        })
+    }
+}
+
+fn setup(
+    cx: &mut TestAppContext,
+) -> (
+    Entity<KeybindingsPage>,
+    gpui::FocusHandle,
+    &mut VisualTestContext,
+) {
+    setup_width(cx, px(880.))
+}
+
+fn setup_width(
+    cx: &mut TestAppContext,
+    width: gpui::Pixels,
+) -> (
+    Entity<KeybindingsPage>,
+    gpui::FocusHandle,
+    &mut VisualTestContext,
+) {
+    cx.update(|cx| {
+        gpui_component::init(cx);
+        crate::actions::init(cx);
+
+        keybindings::register(
+            Quit,
+            "Quit",
+            "Quit the application",
+            "Application",
+            Some("cmd-q"),
+            None,
+            cx,
+        )
+        .unwrap();
+
+        cx.set_global(QuitCount::default());
+        cx.on_action(|_: &Quit, cx| cx.global_mut::<QuitCount>().0 += 1);
+    });
+
+    let (host, cx) = cx.add_window_view(|window, cx| {
+        let view = cx.new(|cx| KeybindingsPage::new(window, cx));
+        cx.observe(&view, |_, _, cx| cx.notify()).detach();
+
+        RecorderHarness {
+            page: view,
+            outside: cx.focus_handle(),
+            width,
+        }
+    });
+
+    cx.update(|window, _| window.activate_window());
+    cx.run_until_parked();
+
+    let (page, outside) = host.read_with(cx, |host, _| (host.page.clone(), host.outside.clone()));
+
+    (page, outside, cx)
+}
+
+fn start(page: &Entity<KeybindingsPage>, id: &str, cx: &mut VisualTestContext) {
+    cx.update(|window, cx| {
+        let command = keybindings::commands(cx)
+            .into_iter()
+            .find(|c| c.id == id)
+            .unwrap();
+
+        page.update(cx, |page, cx| page.start_recording(command, window, cx));
+    });
+}
+
+fn click_recorder_button(selector: &'static str, cx: &mut VisualTestContext) {
+    let bounds = cx
+        .debug_bounds(selector)
+        .expect("recorder button should be rendered");
+    cx.simulate_click(bounds.center(), Modifiers::default());
+}
+
+#[gpui::test]
+fn recording_intercepts_commands_and_saves_a_replacement(cx: &mut TestAppContext) {
+    let (page, _, cx) = setup(cx);
+
+    cx.update(|window, cx| {
+        let command = keybindings::commands(cx)
+            .into_iter()
+            .find(|command| command.id == Quit::name_for_type())
+            .unwrap();
+
+        page.update(cx, |page, cx| page.start_recording(command, window, cx));
+
+        // A fast first key must be intercepted before the recorder's first paint.
+        window.dispatch_keystroke(Keystroke::parse("cmd-q").unwrap(), cx);
+    });
+    cx.read(|cx| {
+        assert_eq!(cx.global::<QuitCount>().0, 0);
+        assert_eq!(
+            page.read(cx)
+                .recording
+                .as_ref()
+                .unwrap()
+                .keystroke
+                .as_ref()
+                .unwrap()
+                .unparse(),
+            "cmd-q"
+        );
+    });
+    cx.simulate_keystrokes("cmd-shift-q");
+    click_recorder_button("save-recording", cx);
+
+    cx.read(|cx| {
+        assert!(page.read(cx).recording.is_none());
+        assert_eq!(
+            keybindings::binding_for::<Quit>(cx).unwrap().keystrokes,
+            Keystroke::parse("cmd-shift-q").unwrap().unparse()
+        );
+    });
+    cx.simulate_keystrokes("cmd-q");
+
+    cx.read(|cx| assert_eq!(cx.global::<QuitCount>().0, 0));
+    cx.simulate_keystrokes("cmd-shift-q");
+
+    cx.read(|cx| assert_eq!(cx.global::<QuitCount>().0, 1));
+}
+
+#[gpui::test]
+fn conflict_and_cancel_preserve_existing_shortcuts(cx: &mut TestAppContext) {
+    let (page, _, cx) = setup(cx);
+
+    start(&page, ToggleLeftSidebar::name_for_type(), cx);
+    cx.simulate_keystrokes("cmd-,");
+    click_recorder_button("save-recording", cx);
+
+    cx.read(|cx| {
+        assert!(
+            page.read(cx)
+                .recording
+                .as_ref()
+                .unwrap()
+                .error
+                .as_ref()
+                .unwrap()
+                .contains("Open settings")
+        );
+    });
+    cx.simulate_keystrokes("cmd-shift-b");
+
+    cx.read(|cx| assert!(page.read(cx).recording.as_ref().unwrap().error.is_none()));
+    click_recorder_button("cancel-recording", cx);
+
+    cx.read(|cx| {
+        assert!(page.read(cx).recording.is_none());
+        assert_eq!(
+            keybindings::binding_for::<ToggleLeftSidebar>(cx)
+                .unwrap()
+                .keystrokes,
+            "cmd-b"
+        );
+        assert_eq!(
+            keybindings::binding_for::<OpenSettings>(cx)
+                .unwrap()
+                .keystrokes,
+            "cmd-,"
+        );
+    });
+}
+
+#[gpui::test]
+fn inline_recorder_releases_capture_when_focus_leaves(cx: &mut TestAppContext) {
+    let (page, outside, cx) = setup(cx);
+
+    start(&page, ToggleLeftSidebar::name_for_type(), cx);
+    cx.simulate_keystrokes("cmd-shift-b");
+    cx.update(|window, cx| {
+        window.focus(&outside, cx);
+    });
+    cx.run_until_parked();
+    cx.read(|cx| {
+        assert!(page.read(cx).recording.is_none());
+        assert_eq!(
+            keybindings::binding_for::<ToggleLeftSidebar>(cx)
+                .unwrap()
+                .keystrokes,
+            "cmd-b"
+        );
+    });
+    cx.simulate_keystrokes("cmd-q");
+
+    cx.read(|cx| assert_eq!(cx.global::<QuitCount>().0, 1));
+}
+
+#[gpui::test]
+fn special_keys_are_recorded_and_never_dispatch_while_capturing(cx: &mut TestAppContext) {
+    let (page, _, cx) = setup(cx);
+
+    // Free Escape so it can be assigned to our harmless Quit action.
+    cx.update(|_, cx| {
+        keybindings::set_override(CloseSettings::name_for_type(), None, cx).unwrap();
+    });
+
+    let mut dispatched = 0;
+    for key in [
+        "escape",
+        "enter",
+        "tab",
+        "shift-tab",
+        "backspace",
+        "delete",
+        "x",
+    ] {
+        let before = cx.read(|cx| {
+            keybindings::binding_for::<Quit>(cx)
+                .unwrap()
+                .keystrokes
+                .clone()
+        });
+
+        start(&page, Quit::name_for_type(), cx);
+        cx.simulate_keystrokes(key);
+
+        cx.read(|cx| {
+            let recording = page
+                .read(cx)
+                .recording
+                .as_ref()
+                .expect("Key must not end recording");
+            assert_eq!(recording.keystroke.as_ref().unwrap().unparse(), key);
+            assert!(recording.error.is_none(), "{key}: {:?}", recording.error);
+            assert_eq!(
+                keybindings::binding_for::<Quit>(cx).unwrap().keystrokes,
+                before
+            );
+            assert_eq!(cx.global::<QuitCount>().0, dispatched);
+        });
+        click_recorder_button("save-recording", cx);
+
+        cx.read(|cx| assert!(page.read(cx).recording.is_none()));
+        cx.simulate_keystrokes(key);
+        dispatched += 1;
+        cx.read(|cx| assert_eq!(cx.global::<QuitCount>().0, dispatched));
+
+        // The same key now has an application action. It must still be captured,
+        // including Tab, which must not navigate out and release the recorder.
+        start(&page, Quit::name_for_type(), cx);
+        cx.simulate_keystrokes(key);
+
+        cx.read(|cx| {
+            assert!(page.read(cx).recording.is_some());
+            assert_eq!(cx.global::<QuitCount>().0, dispatched);
+        });
+        click_recorder_button("cancel-recording", cx);
+        cx.simulate_keystrokes(key);
+        dispatched += 1;
+        cx.read(|cx| assert_eq!(cx.global::<QuitCount>().0, dispatched));
+    }
+}
+
+#[test]
+fn search_accepts_names_symbols_and_modifier_aliases() {
+    let mut app = gpui::TestApp::new();
+    app.update(crate::actions::init);
+
+    app.read(|cx| {
+        let commands = keybindings::commands(cx);
+        let found = commands
+            .iter()
+            .filter(|c| matches_search(c, "sidebar"))
+            .collect::<Vec<_>>();
+        assert_eq!(found.len(), 1);
+        assert_eq!(found[0].id, ToggleLeftSidebar::name_for_type());
+
+        for query in ["⌘B", "Command+B", "cmd-b", "collections"] {
+            assert!(matches_search(found[0], query), "{query}");
+        }
+
+        assert!(!matches_search(found[0], "sidebar no-such-command"));
+    });
+}
+
+#[gpui::test]
+fn recorder_buttons_save_cancel_and_remove(cx: &mut TestAppContext) {
+    let (page, _, cx) = setup(cx);
+
+    start(&page, Quit::name_for_type(), cx);
+    cx.simulate_keystrokes("cmd-shift-q");
+    click_recorder_button("cancel-recording", cx);
+
+    cx.read(|cx| assert!(page.read(cx).recording.is_none()));
+    cx.simulate_keystrokes("cmd-q");
+
+    cx.read(|cx| assert_eq!(cx.global::<QuitCount>().0, 1));
+
+    start(&page, Quit::name_for_type(), cx);
+    cx.simulate_keystrokes("cmd-shift-q");
+    click_recorder_button("save-recording", cx);
+
+    cx.read(|cx| {
+        assert!(page.read(cx).recording.is_none());
+        assert_eq!(
+            keybindings::binding_for::<Quit>(cx).unwrap().keystrokes,
+            "cmd-shift-q"
+        );
+    });
+    cx.simulate_keystrokes("cmd-q");
+
+    cx.read(|cx| assert_eq!(cx.global::<QuitCount>().0, 1));
+    cx.simulate_keystrokes("cmd-shift-q");
+
+    cx.read(|cx| assert_eq!(cx.global::<QuitCount>().0, 2));
+
+    click_recorder_button("remove-settings_tests::Quit", cx);
+
+    cx.read(|cx| {
+        assert!(page.read(cx).recording.is_none());
+        assert!(keybindings::binding_for::<Quit>(cx).is_none());
+    });
+    cx.simulate_keystrokes("cmd-shift-q");
+
+    cx.read(|cx| assert_eq!(cx.global::<QuitCount>().0, 2));
+
+    click_recorder_button("reset-settings_tests::Quit", cx);
+    start(&page, Quit::name_for_type(), cx);
+    click_recorder_button("remove-recording", cx);
+
+    cx.read(|cx| {
+        assert!(page.read(cx).recording.is_none());
+        assert!(keybindings::binding_for::<Quit>(cx).is_none());
+    });
+    cx.simulate_keystrokes("cmd-q");
+
+    cx.read(|cx| assert_eq!(cx.global::<QuitCount>().0, 2));
+}
+
+#[gpui::test]
+fn recording_keeps_command_rows_and_shortcut_column_in_place(cx: &mut TestAppContext) {
+    for width in [px(320.), px(880.)] {
+        let (page, _, cx) = setup_width(cx, width);
+
+        let selectors = [
+            "keybinding-row-workspace::OpenSettings",
+            "keybinding-row-workspace::ToggleLeftSidebar",
+            "shortcut-slot-workspace::ToggleLeftSidebar",
+        ];
+        let before = selectors.map(|selector| cx.debug_bounds(selector).unwrap());
+        let record = cx
+            .debug_bounds("record-workspace::ToggleLeftSidebar")
+            .unwrap();
+        cx.simulate_click(record.center(), Modifiers::default());
+
+        cx.read(|cx| assert!(page.read(cx).recording.is_some()));
+        for keys in [
+            "",
+            "cmd-ctrl-alt-shift-b",
+            "cmd-,",
+            "escape",
+            "tab",
+            "enter",
+        ] {
+            if !keys.is_empty() {
+                cx.simulate_keystrokes(keys);
+            }
+
+            for (selector, expected) in selectors.iter().zip(before) {
+                assert_eq!(
+                    cx.debug_bounds(selector).unwrap(),
+                    expected,
+                    "{selector}, {width:?}, {keys}"
+                );
+            }
+        }
+
+        click_recorder_button("cancel-recording", cx);
+
+        cx.read(|cx| assert!(page.read(cx).recording.is_none()));
+        for (selector, expected) in selectors.iter().zip(before) {
+            assert_eq!(cx.debug_bounds(selector).unwrap(), expected);
+        }
+    }
+}

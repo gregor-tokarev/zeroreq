@@ -25,6 +25,7 @@ impl Collection {
             path: path.to_path_buf(),
             source,
         })?;
+
         if !metadata.is_dir() {
             return Err(CollectionLoadError::UnsupportedPath {
                 path: path.to_path_buf(),
@@ -132,6 +133,7 @@ fn load_file(path: &Path) -> Result<FileEntry, CollectionLoadError> {
         path: path.to_path_buf(),
         source,
     })?;
+
     let mut entry: FileEntry =
         toml::from_str(&raw_content).map_err(|source| CollectionLoadError::Parse {
             path: path.to_path_buf(),
@@ -140,6 +142,7 @@ fn load_file(path: &Path) -> Result<FileEntry, CollectionLoadError> {
 
     entry.path = path.to_path_buf();
     entry.raw_content = raw_content;
+
     Ok(entry)
 }
 
@@ -196,6 +199,7 @@ fn save_file(entry: &mut FileEntry) -> Result<(), CollectionSaveError> {
         path: entry.path.clone(),
         source,
     })?;
+
     entry.raw_content = raw_content;
 
     Ok(())
@@ -229,11 +233,13 @@ fn file_name(path: &Path) -> String {
 pub enum CollectionLoadError {
     #[error("failed to read {}: {source}", .path.display())]
     Read { path: PathBuf, source: io::Error },
+
     #[error("failed to parse {}: {source}", .path.display())]
     Parse {
         path: PathBuf,
         source: toml::de::Error,
     },
+
     #[error("unsupported collection path {}", .path.display())]
     UnsupportedPath { path: PathBuf },
 }
@@ -245,11 +251,13 @@ pub enum CollectionSaveError {
         path: PathBuf,
         source: toml::ser::Error,
     },
+
     #[error("failed to edit collection file {}: {source}", .path.display())]
     Edit {
         path: PathBuf,
         source: toml_edit::TomlError,
     },
+
     #[error("failed to write {}: {source}", .path.display())]
     Write { path: PathBuf, source: io::Error },
 }
@@ -284,6 +292,7 @@ mod tests {
         let root = test_directory();
         let nested = root.join("users");
         let request_path = nested.join("list.toml");
+
         fs::create_dir_all(&nested).unwrap();
         fs::write(
             &request_path,
@@ -313,7 +322,9 @@ request_custom = "keep me too"
             panic!("expected request file");
         };
         let Request::Http(request) = &mut request.request;
+
         assert!(matches!(request.method, Method::Get));
+
         request.path = "/v2/users".into();
 
         collection.save_files().unwrap();
@@ -333,6 +344,7 @@ request_custom = "keep me too"
             panic!("expected request file");
         };
         let Request::Http(request) = &request.request;
+
         assert_eq!(request.path, "/v2/users");
 
         fs::remove_dir_all(root).unwrap();

@@ -1,7 +1,7 @@
 use gpui::*;
 use gpui_component::{ActiveTheme as _, Colorize as _, IconNamed, Sizable as _, button::*};
 
-use crate::actions::ToggleLeftSidebar;
+use crate::actions::{OpenSettings, ToggleLeftSidebar};
 
 pub(crate) const TOGGLE_SIDEBAR_BUTTON: &str = "toggle-sidebar";
 
@@ -63,6 +63,16 @@ impl RenderOnce for BottomPanel {
                             }),
                     ),
             )
-            .child("bottom panel")
+            .child(div().flex_1())
+            .child(
+                Button::new("open-settings")
+                    .ghost()
+                    .small()
+                    .icon(gpui_component::IconName::Settings2)
+                    .tooltip_with_action("Settings", &OpenSettings, None)
+                    .on_click(|_, window, cx| {
+                        window.dispatch_action(OpenSettings.boxed_clone(), cx);
+                    }),
+            )
     }
 }

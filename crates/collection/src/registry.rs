@@ -28,6 +28,7 @@ impl CollectionRegistry {
     /// Loads collections from `~/.zeroreq/collections`.
     pub fn load() -> Result<Self, CollectionRegistryLoadError> {
         let home = dirs::home_dir().ok_or(CollectionRegistryLoadError::HomeDirectoryUnavailable)?;
+
         Self::from_path(home.join(".zeroreq").join("collections"))
     }
 
@@ -64,6 +65,7 @@ impl CollectionRegistry {
                     source,
                 }
             })?;
+
             if !metadata.is_dir() {
                 continue;
             }
@@ -117,13 +119,16 @@ impl CollectionRegistry {
 pub enum CollectionRegistryLoadError {
     #[error("could not determine the user's home directory")]
     HomeDirectoryUnavailable,
+
     #[error("failed to read collections from {}: {source}", .path.display())]
     Read { path: PathBuf, source: io::Error },
+
     #[error("failed to load the environment for {}: {source}", .path.display())]
     Environment {
         path: PathBuf,
         source: EnvironmentLoadError,
     },
+
     #[error("failed to load collection {}: {source}", .path.display())]
     Collection {
         path: PathBuf,
@@ -161,6 +166,7 @@ mod tests {
         let root = test_directory();
         let alpha = root.join("alpha");
         let beta = root.join("beta");
+
         fs::create_dir_all(&alpha).unwrap();
         fs::create_dir_all(&beta).unwrap();
         fs::write(alpha.join(ENVIRONMENT_FILE_NAME), "base_url = \"local\"\n").unwrap();

@@ -18,3 +18,6 @@ sha2 = "0.10"
 smol = "2"
 zeroreq-theme = { package = "theme", path = "../theme" }
 workspace = { package = "workspace", path = "../workspace" }
+
+[dev-dependencies]
+gpui = { git = "https://github.com/zed-industries/zed", features = ["test-support"] }
