@@ -1,14 +1,16 @@
-use gpui::{App, actions};
+use gpui::{App, Entity, actions};
 
-use super::{about, quit, updater};
+use super::{quit, updater};
 
-actions!(zeroreq, [About, CheckForUpdates, Quit]);
+actions!(zeroreq, [CheckForUpdates, Quit]);
 
-pub fn init(cx: &mut App) {
+pub fn init(updater: Entity<updater::Updater>, cx: &mut App) {
     keybindings_service::set_binding("cmd-q", Quit, None, cx)
         .expect("default quit keybinding should be valid");
 
-    cx.on_action(|_: &About, cx| about::open_about_window(cx))
-        .on_action(|_: &CheckForUpdates, cx| updater::open_update_window(cx))
-        .on_action(|_: &Quit, cx| quit::quit(cx));
+    cx.on_action(move |_: &CheckForUpdates, cx| {
+        updater.update(cx, |updater, cx| updater.check(cx));
+        cx.defer(|cx| cx.dispatch_action(&workspace::OpenGeneralSettings));
+    })
+    .on_action(|_: &Quit, cx| quit::quit(cx));
 }

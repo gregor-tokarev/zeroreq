@@ -27,6 +27,7 @@ impl EnvironmentRegistry {
 
     pub fn resolve(&self, name: &str) -> Option<&str> {
         let environment_index = self.index.get(name)?;
+
         self.entries[*environment_index].resolve(name)
     }
 }

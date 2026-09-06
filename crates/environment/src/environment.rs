@@ -3,6 +3,7 @@ use std::{
     fs, io,
     path::{Path, PathBuf},
 };
+
 use thiserror::Error;
 
 pub struct Environment {
@@ -63,6 +64,7 @@ impl Environment {
 pub enum EnvironmentLoadError {
     #[error("failed to read {}: {source}", .path.display())]
     Read { path: PathBuf, source: io::Error },
+
     #[error("failed to parse {}: {source}", .path.display())]
     Parse {
         path: PathBuf,
@@ -77,6 +79,7 @@ pub enum EnvironmentSaveError {
         path: PathBuf,
         source: toml::ser::Error,
     },
+
     #[error("failed to write {}: {source}", .path.display())]
     Write { path: PathBuf, source: io::Error },
 }

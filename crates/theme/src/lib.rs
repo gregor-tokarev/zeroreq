@@ -31,6 +31,7 @@ pub fn apply(name: &str, cx: &mut App) -> bool {
 
     Theme::global_mut(cx).apply_config(&config);
     cx.refresh_windows();
+
     true
 }
 
