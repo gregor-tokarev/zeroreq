@@ -31,16 +31,13 @@ fn main() {
 
         zeroreq_theme::init(cx);
 
-        let updater = zeroreq::updater::init(cx);
+        let updater = updater::init(env!("CARGO_PKG_VERSION"), cx);
         zeroreq::actions::init(updater.clone(), cx);
-
-        let general_settings =
-            cx.new(|cx| zeroreq::general_settings::GeneralSettings::new(updater, cx));
 
         let collections = collection::CollectionRegistry::load()
             .expect("Failed to load collections from ~/.zeroreq/collections");
 
-        workspace::init(collections, general_settings.into(), cx);
+        workspace::init(collections, updater, cx);
         zeroreq::menu::init(cx);
     });
 }

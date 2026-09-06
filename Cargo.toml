@@ -4,6 +4,7 @@ members = [
     "crates/environment",
     "crates/keybindings_service",
     "crates/theme",
+    "crates/updater",
     "crates/workspace",
     "crates/zeroreq",
 ]

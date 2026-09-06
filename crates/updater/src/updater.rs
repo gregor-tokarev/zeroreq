@@ -1,6 +1,8 @@
+#[path = "install.rs"]
 mod install;
 
 #[cfg(test)]
+#[path = "tests.rs"]
 mod tests;
 
 use std::sync::Arc;
@@ -15,8 +17,6 @@ use smol::io::AsyncReadExt;
 
 const UPDATE_MANIFEST_URL: &str =
     "https://github.com/gregor-tokarev/zeroreq/releases/latest/download/zeroreq-update.json";
-
-pub const CURRENT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct UpdateManifest {
@@ -36,10 +36,15 @@ pub enum UpdateStatus {
 }
 
 pub struct Updater {
+    current_version: &'static str,
     status: UpdateStatus,
 }
 
 impl Updater {
+    pub fn current_version(&self) -> &str {
+        self.current_version
+    }
+
     pub fn status(&self) -> &UpdateStatus {
         &self.status
     }
@@ -61,9 +66,10 @@ impl Updater {
         self.set_status(UpdateStatus::Checking, cx);
 
         let http_client = cx.http_client();
+        let current_version = self.current_version;
 
         cx.spawn(async move |this, cx| {
-            let status = match check_for_update(http_client).await {
+            let status = match check_for_update(http_client, current_version).await {
                 Ok(Some(manifest)) => UpdateStatus::Available(manifest),
                 Ok(None) => UpdateStatus::UpToDate,
                 Err(error) => UpdateStatus::Error(error),
@@ -98,8 +104,9 @@ impl Updater {
     }
 }
 
-pub fn init(cx: &mut App) -> Entity<Updater> {
+pub fn init(current_version: &'static str, cx: &mut App) -> Entity<Updater> {
     let updater = cx.new(|_| Updater {
+        current_version,
         status: UpdateStatus::Idle,
     });
 
@@ -113,6 +120,7 @@ pub fn init(cx: &mut App) -> Entity<Updater> {
 
 async fn check_for_update(
     http_client: Arc<dyn HttpClient>,
+    current_version: &str,
 ) -> Result<Option<UpdateManifest>, String> {
     let mut response = http_client
         .get(UPDATE_MANIFEST_URL, AsyncBody::empty(), true)
@@ -140,7 +148,7 @@ async fn check_for_update(
     let manifest: UpdateManifest = serde_json::from_slice(&body)
         .map_err(|error| format!("The update manifest is invalid: {error}"))?;
 
-    let installed = Version::parse(CURRENT_VERSION)
+    let installed = Version::parse(current_version)
         .map_err(|error| format!("The installed version is invalid: {error}"))?;
     let released = Version::parse(manifest.version.trim_start_matches('v'))
         .map_err(|error| format!("The released version is invalid: {error}"))?;

@@ -1,3 +1,4 @@
+mod general;
 mod keybindings;
 
 use gpui::{prelude::FluentBuilder as _, *};
@@ -9,7 +10,9 @@ use gpui_component::{
 };
 
 use crate::actions::CloseSettings;
+use general::GeneralSettings;
 use keybindings::KeybindingsPage;
+use updater::Updater;
 
 pub(crate) enum SettingsEvent {
     Close,
@@ -39,7 +42,7 @@ impl SettingsPage {
 
 pub(crate) struct Settings {
     page: SettingsPage,
-    general: AnyView,
+    general: Entity<GeneralSettings>,
     keybindings: Entity<KeybindingsPage>,
     focus_handle: FocusHandle,
 }
@@ -47,10 +50,14 @@ pub(crate) struct Settings {
 impl EventEmitter<SettingsEvent> for Settings {}
 
 impl Settings {
-    pub(crate) fn new(general: AnyView, window: &mut Window, cx: &mut Context<Self>) -> Self {
+    pub(crate) fn new(
+        updater: Entity<Updater>,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> Self {
         let this = Self {
             page: SettingsPage::General,
-            general,
+            general: cx.new(|cx| GeneralSettings::new(updater, cx)),
             keybindings: cx.new(|cx| KeybindingsPage::new(window, cx)),
             focus_handle: cx.focus_handle(),
         };

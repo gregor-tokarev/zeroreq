@@ -7117,6 +7117,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8ecb6da28b8a351d773b68d5825ac39017e680750f980f3a1a85cd8dd28a47c1"
 
 [[package]]
+name = "updater"
+version = "0.1.0"
+dependencies = [
+ "gpui",
+ "semver",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "smol",
+]
+
+[[package]]
 name = "url"
 version = "2.5.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8342,6 +8354,9 @@ dependencies = [
  "gpui_platform",
  "keybindings_service",
  "reqwest_client",
+ "serde_json",
+ "smol",
+ "updater",
 ]
 
 [[package]]
@@ -8728,12 +8743,8 @@ dependencies = [
  "gpui_platform",
  "keybindings_service",
  "reqwest_client",
- "semver",
- "serde",
- "serde_json",
- "sha2 0.10.9",
- "smol",
  "theme",
+ "updater",
  "workspace",
 ]
 

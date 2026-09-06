@@ -11,11 +11,7 @@ gpui-component-assets.workspace = true
 gpui_platform.workspace = true
 keybindings_service = { path = "../keybindings_service" }
 reqwest_client.workspace = true
-semver = "1"
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-sha2 = "0.10"
-smol = "2"
+updater = { path = "../updater" }
 zeroreq-theme = { package = "theme", path = "../theme" }
 workspace = { package = "workspace", path = "../workspace" }
 

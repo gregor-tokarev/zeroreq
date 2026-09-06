@@ -1,6 +1,9 @@
 use gpui::{App, Entity, actions};
 
-use super::{quit, updater};
+use super::quit;
+
+#[cfg(test)]
+mod tests;
 
 actions!(zeroreq, [CheckForUpdates, Quit]);
 

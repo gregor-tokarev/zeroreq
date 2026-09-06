@@ -9,12 +9,12 @@ use gpui_component::{
     resizable::{h_resizable, resizable_panel},
     *,
 };
+use updater::Updater;
 
 struct Layout {
     collections: Arc<CollectionRegistry>,
 
-    // The app owns version and update details; retain the page across settings visits.
-    general_settings: AnyView,
+    updater: Entity<Updater>,
 
     sidebar_visible: bool,
 
@@ -25,10 +25,10 @@ struct Layout {
 }
 
 impl Layout {
-    fn new(collections: Arc<CollectionRegistry>, general_settings: AnyView) -> Self {
+    fn new(collections: Arc<CollectionRegistry>, updater: Entity<Updater>) -> Self {
         Self {
             collections,
-            general_settings,
+            updater,
             sidebar_visible: true,
             settings: None,
             previous_focus: None,
@@ -43,7 +43,7 @@ impl Layout {
         }
 
         self.previous_focus = window.focused(cx);
-        let settings = cx.new(|cx| Settings::new(self.general_settings.clone(), window, cx));
+        let settings = cx.new(|cx| Settings::new(self.updater.clone(), window, cx));
 
         self._settings_subscription = Some(cx.subscribe_in(
             &settings,
@@ -145,11 +145,11 @@ impl Render for Layout {
     }
 }
 
-pub fn init(collections: CollectionRegistry, general_settings: AnyView, cx: &mut App) {
+pub fn init(collections: CollectionRegistry, updater: Entity<Updater>, cx: &mut App) {
     crate::actions::init(cx);
 
     let window_options = crate::window_options::use_window_options(cx);
-    let layout = cx.new(|_| Layout::new(Arc::new(collections), general_settings));
+    let layout = cx.new(|_| Layout::new(Arc::new(collections), updater));
     on_toggle_sidebar(&layout, cx);
 
     cx.open_window(window_options, move |window, cx| {
@@ -166,7 +166,7 @@ mod tests {
     use crate::actions::ToggleLeftSidebar;
     use crate::layout::bottom_panel::TOGGLE_SIDEBAR_BUTTON;
     use collection::CollectionRegistry;
-    use gpui::{AppContext as _, Modifiers, TestAppContext};
+    use gpui::{Modifiers, TestAppContext};
     use std::sync::Arc;
 
     #[gpui::test]
@@ -179,7 +179,7 @@ mod tests {
         let (layout, cx) = cx.add_window_view(|_, cx| {
             Layout::new(
                 Arc::new(CollectionRegistry::new()),
-                cx.new(|_| gpui::Empty).into(),
+                updater::init("1.2.3", cx),
             )
         });
         cx.update(|_, cx| on_toggle_sidebar(&layout, cx));

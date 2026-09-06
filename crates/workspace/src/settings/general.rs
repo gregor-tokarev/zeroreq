@@ -1,15 +1,18 @@
 use gpui::{prelude::*, *};
 use gpui_component::{ActiveTheme as _, Disableable as _, button::*, h_flex, v_flex};
 
-use super::updater::{CURRENT_VERSION, UpdateStatus, Updater};
+use updater::{UpdateStatus, Updater};
 
-pub struct GeneralSettings {
+#[cfg(test)]
+mod tests;
+
+pub(super) struct GeneralSettings {
     updater: Entity<Updater>,
     _subscription: Subscription,
 }
 
 impl GeneralSettings {
-    pub fn new(updater: Entity<Updater>, cx: &mut Context<Self>) -> Self {
+    pub(super) fn new(updater: Entity<Updater>, cx: &mut Context<Self>) -> Self {
         let subscription = cx.observe(&updater, |_, _, cx| cx.notify());
 
         Self {
@@ -21,7 +24,8 @@ impl GeneralSettings {
 
 impl Render for GeneralSettings {
     fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let status = self.updater.read(cx).status();
+        let updater = self.updater.read(cx);
+        let status = updater.status();
         let message = match status {
             UpdateStatus::Idle => "Check for a new version of Zeroreq.".to_owned(),
             UpdateStatus::Checking => "Checking for updates…".to_owned(),
@@ -64,7 +68,7 @@ impl Render for GeneralSettings {
                                 div()
                                     .text_sm()
                                     .text_color(cx.theme().muted_foreground)
-                                    .child(format!("Version {CURRENT_VERSION}")),
+                                    .child(format!("Version {}", updater.current_version())),
                             ),
                     )
                     .child(
