@@ -1,11 +1,11 @@
-use gpui::{
+use gpui_kit::{
     AppContext as _, TestAppContext,
     http_client::{FakeHttpClient, Response},
 };
 
 use super::{UpdateStatus, Updater, check_for_update};
 
-#[gpui::test]
+#[gpui_kit::test]
 fn checks_against_the_application_version(cx: &mut TestAppContext) {
     let http = FakeHttpClient::create(|_| async {
         Ok(Response::builder()
@@ -29,7 +29,7 @@ fn checks_against_the_application_version(cx: &mut TestAppContext) {
     });
 }
 
-#[gpui::test]
+#[gpui_kit::test]
 fn installation_cannot_be_interrupted_or_restarted(cx: &mut TestAppContext) {
     cx.update(|cx| {
         cx.set_http_client(FakeHttpClient::create(|_| async {
@@ -65,7 +65,7 @@ fn manifest(version: &str) -> String {
     .to_string()
 }
 
-#[gpui::test]
+#[gpui_kit::test]
 async fn update_check_handles_version_boundaries_and_invalid_responses() {
     for (version, available) in [
         ("99.0.0", true),

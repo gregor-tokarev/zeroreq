@@ -7,7 +7,7 @@ mod tests;
 
 use std::sync::Arc;
 
-use gpui::{
+use gpui_kit::{
     App, AppContext, Context, Entity,
     http_client::{AsyncBody, HttpClient},
 };

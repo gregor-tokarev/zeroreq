@@ -1,5 +1,5 @@
-use gpui::*;
-use gpui_component::ActiveTheme as _;
+use gpui_kit::component::ActiveTheme as _;
+use gpui_kit::*;
 
 #[derive(Default)]
 pub struct TopPanel;

@@ -3,7 +3,7 @@ use std::sync::{
     atomic::{AtomicUsize, Ordering},
 };
 
-use gpui::{
+use gpui_kit::{
     TestAppContext,
     http_client::{FakeHttpClient, Response},
 };
@@ -11,7 +11,7 @@ use gpui::{
 use super::CheckForUpdates;
 use updater::UpdateStatus;
 
-#[gpui::test]
+#[gpui_kit::test]
 fn menu_starts_check_and_opens_general(cx: &mut TestAppContext) {
     let requests = Arc::new(AtomicUsize::new(0));
     let http = FakeHttpClient::create({
@@ -31,7 +31,7 @@ fn menu_starts_check_and_opens_general(cx: &mut TestAppContext) {
     let updater = cx.update(|cx| updater::init("1.2.3", cx));
 
     cx.update(|cx| {
-        gpui_component::init(cx);
+        gpui_kit::init(cx);
         cx.set_http_client(http);
         super::init(updater.clone(), cx);
 
@@ -41,7 +41,7 @@ fn menu_starts_check_and_opens_general(cx: &mut TestAppContext) {
         });
     });
 
-    let (_, view) = cx.add_window_view(|_, _| gpui::Empty);
+    let (_, view) = cx.add_window_view(|_, _| gpui_kit::Empty);
     view.update(|window, _| window.activate_window());
 
     view.dispatch_action(CheckForUpdates);

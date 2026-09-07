@@ -1,6 +1,6 @@
 use super::{KeybindingsPage, matches_search};
 use crate::actions::{CloseSettings, OpenSettings, ToggleLeftSidebar};
-use gpui::{
+use gpui_kit::{
     Action, AppContext as _, Context, Entity, Global, InteractiveElement as _, IntoElement,
     Keystroke, Modifiers, ParentElement as _, Render, Styled as _, TestAppContext,
     VisualTestContext, Window, actions, div, px,
@@ -19,8 +19,8 @@ impl Global for QuitCount {}
 // handler requires Root. This exercises row layout, clicks, and key dispatch.
 struct RecorderHarness {
     page: Entity<KeybindingsPage>,
-    outside: gpui::FocusHandle,
-    width: gpui::Pixels,
+    outside: gpui_kit::FocusHandle,
+    width: gpui_kit::Pixels,
 }
 
 impl Render for RecorderHarness {
@@ -29,7 +29,7 @@ impl Render for RecorderHarness {
             let mut commands = keybindings::commands(cx);
             commands.sort_by_key(|command| command.label);
 
-            gpui_component::v_flex()
+            gpui_kit::component::v_flex()
                 .w(self.width)
                 .child(div().id("outside-recorder").track_focus(&self.outside))
                 .children(
@@ -45,7 +45,7 @@ fn setup(
     cx: &mut TestAppContext,
 ) -> (
     Entity<KeybindingsPage>,
-    gpui::FocusHandle,
+    gpui_kit::FocusHandle,
     &mut VisualTestContext,
 ) {
     setup_width(cx, px(880.))
@@ -53,14 +53,14 @@ fn setup(
 
 fn setup_width(
     cx: &mut TestAppContext,
-    width: gpui::Pixels,
+    width: gpui_kit::Pixels,
 ) -> (
     Entity<KeybindingsPage>,
-    gpui::FocusHandle,
+    gpui_kit::FocusHandle,
     &mut VisualTestContext,
 ) {
     cx.update(|cx| {
-        gpui_component::init(cx);
+        gpui_kit::init(cx);
         crate::actions::init(cx);
 
         keybindings::register(
@@ -115,7 +115,7 @@ fn click_recorder_button(selector: &'static str, cx: &mut VisualTestContext) {
     cx.simulate_click(bounds.center(), Modifiers::default());
 }
 
-#[gpui::test]
+#[gpui_kit::test]
 fn recording_intercepts_commands_and_saves_a_replacement(cx: &mut TestAppContext) {
     let (page, _, cx) = setup(cx);
 
@@ -162,7 +162,7 @@ fn recording_intercepts_commands_and_saves_a_replacement(cx: &mut TestAppContext
     cx.read(|cx| assert_eq!(cx.global::<QuitCount>().0, 1));
 }
 
-#[gpui::test]
+#[gpui_kit::test]
 fn conflict_and_cancel_preserve_existing_shortcuts(cx: &mut TestAppContext) {
     let (page, _, cx) = setup(cx);
 
@@ -204,7 +204,7 @@ fn conflict_and_cancel_preserve_existing_shortcuts(cx: &mut TestAppContext) {
     });
 }
 
-#[gpui::test]
+#[gpui_kit::test]
 fn inline_recorder_releases_capture_when_focus_leaves(cx: &mut TestAppContext) {
     let (page, outside, cx) = setup(cx);
 
@@ -228,7 +228,7 @@ fn inline_recorder_releases_capture_when_focus_leaves(cx: &mut TestAppContext) {
     cx.read(|cx| assert_eq!(cx.global::<QuitCount>().0, 1));
 }
 
-#[gpui::test]
+#[gpui_kit::test]
 fn special_keys_are_recorded_and_never_dispatch_while_capturing(cx: &mut TestAppContext) {
     let (page, _, cx) = setup(cx);
 
@@ -296,7 +296,7 @@ fn special_keys_are_recorded_and_never_dispatch_while_capturing(cx: &mut TestApp
 
 #[test]
 fn search_accepts_names_symbols_and_modifier_aliases() {
-    let mut app = gpui::TestApp::new();
+    let mut app = gpui_kit::TestApp::new();
     app.update(crate::actions::init);
 
     app.read(|cx| {
@@ -316,7 +316,7 @@ fn search_accepts_names_symbols_and_modifier_aliases() {
     });
 }
 
-#[gpui::test]
+#[gpui_kit::test]
 fn recorder_buttons_save_cancel_and_remove(cx: &mut TestAppContext) {
     let (page, _, cx) = setup(cx);
 
@@ -370,7 +370,7 @@ fn recorder_buttons_save_cancel_and_remove(cx: &mut TestAppContext) {
     cx.read(|cx| assert_eq!(cx.global::<QuitCount>().0, 2));
 }
 
-#[gpui::test]
+#[gpui_kit::test]
 fn recording_keeps_command_rows_and_shortcut_column_in_place(cx: &mut TestAppContext) {
     for width in [px(320.), px(880.)] {
         let (page, _, cx) = setup_width(cx, width);

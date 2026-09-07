@@ -1,4 +1,4 @@
-use gpui::{KeyBinding, KeyContext, Keystroke, TestApp, actions};
+use gpui_kit::{KeyBinding, KeyContext, Keystroke, TestApp, actions};
 
 use super::*;
 

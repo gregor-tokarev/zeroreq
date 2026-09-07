@@ -1,13 +1,13 @@
 mod general;
 mod keybindings;
 
-use gpui::{prelude::FluentBuilder as _, *};
-use gpui_component::{
+use gpui_kit::component::{
     button::*,
     resizable::{h_resizable, resizable_panel},
     scroll::ScrollableElement as _,
     *,
 };
+use gpui_kit::{prelude::FluentBuilder as _, *};
 
 use crate::actions::CloseSettings;
 use general::GeneralSettings;

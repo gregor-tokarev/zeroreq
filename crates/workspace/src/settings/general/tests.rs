@@ -3,7 +3,7 @@ use std::sync::{
     atomic::{AtomicUsize, Ordering},
 };
 
-use gpui::{
+use gpui_kit::{
     Modifiers, TestAppContext,
     http_client::{FakeHttpClient, Response},
 };
@@ -20,7 +20,7 @@ fn manifest(version: &str) -> String {
     .to_string()
 }
 
-#[gpui::test]
+#[gpui_kit::test]
 fn checking_survives_closing_settings_and_does_not_open_a_window(cx: &mut TestAppContext) {
     let requests = Arc::new(AtomicUsize::new(0));
     let (respond, wait) = smol::channel::bounded::<()>(1);
@@ -46,7 +46,7 @@ fn checking_survives_closing_settings_and_does_not_open_a_window(cx: &mut TestAp
     });
 
     cx.update(|cx| {
-        gpui_component::init(cx);
+        gpui_kit::init(cx);
         cx.set_http_client(http);
     });
 
@@ -93,7 +93,7 @@ fn checking_survives_closing_settings_and_does_not_open_a_window(cx: &mut TestAp
     assert_eq!(requests.load(Ordering::SeqCst), 1);
 }
 
-#[gpui::test]
+#[gpui_kit::test]
 fn failed_check_can_be_retried_from_general(cx: &mut TestAppContext) {
     let requests = Arc::new(AtomicUsize::new(0));
     let http = FakeHttpClient::create({
@@ -118,7 +118,7 @@ fn failed_check_can_be_retried_from_general(cx: &mut TestAppContext) {
     });
 
     cx.update(|cx| {
-        gpui_component::init(cx);
+        gpui_kit::init(cx);
         cx.set_http_client(http);
     });
 

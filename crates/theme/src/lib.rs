@@ -1,7 +1,7 @@
 //! Theme setup shared by Zeroreq windows.
 
-use gpui::{App, SharedString};
-use gpui_component::{Theme, ThemeRegistry};
+use gpui_kit::component::{Theme, ThemeRegistry};
+use gpui_kit::{App, SharedString};
 
 /// The custom theme applied when the application starts.
 pub const DEFAULT_THEME: &str = "Ayu Dark";

@@ -3,14 +3,14 @@ mod recorder;
 #[cfg(test)]
 mod tests;
 
-use gpui::{prelude::FluentBuilder as _, *};
-use gpui_component::{
+use gpui_kit::component::{
     button::*,
     input::{Input, InputEvent, InputState},
     kbd::Kbd,
     tooltip::Tooltip,
     *,
 };
+use gpui_kit::{prelude::FluentBuilder as _, *};
 use keybindings_service::{self as keybindings, Command};
 
 use recorder::Recording;

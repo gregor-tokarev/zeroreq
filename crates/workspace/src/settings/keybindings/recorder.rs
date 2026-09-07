@@ -1,6 +1,6 @@
-use gpui::*;
-use gpui_component::button::*;
-use gpui_component::*;
+use gpui_kit::component::button::*;
+use gpui_kit::component::*;
+use gpui_kit::*;
 use keybindings_service::{self as keybindings, Command};
 
 use super::{KeybindingsPage, shortcut_keycaps};

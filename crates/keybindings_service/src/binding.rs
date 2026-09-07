@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use gpui::{
+use gpui_kit::{
     Action, DummyKeyboardMapper, InvalidKeystrokeError, KeyBinding, KeyBindingContextPredicate,
     Keystroke, SharedString, Unbind,
 };

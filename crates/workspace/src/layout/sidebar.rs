@@ -1,10 +1,10 @@
 use std::{path::Path, sync::Arc};
 
 use collection::{Collection, CollectionRegistry, Entry};
-use gpui::*;
-use gpui_component::{
+use gpui_kit::component::{
     ActiveTheme as _, StyledExt as _, button::*, scroll::ScrollableElement as _, v_flex,
 };
+use gpui_kit::*;
 
 pub struct Sidebar {
     collections: Arc<CollectionRegistry>,

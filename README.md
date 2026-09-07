@@ -6,6 +6,17 @@
 
 <p align="center">zero-friction API client</p>
 
+## Development
+
+Zeroreq uses Longbridge's `gpui-kit` 0.6.0. Import GPUI types from `gpui_kit`
+and styled controls from `gpui_kit::component`. The workspace pins the kit
+release; individual crates enable `component`, `assets`, and `test-support`
+as needed. The HTTP client uses the matching `gpui-pre-reqwest-client` release
+because the kit does not re-export it.
+
+Run `cargo test --workspace --locked` to test the workspace, or `make run` to
+build and launch the macOS app bundle.
+
 ## Settings
 
 Open Settings with **⌘,**, the status bar settings button, or **Zeroreq → Settings…**.
