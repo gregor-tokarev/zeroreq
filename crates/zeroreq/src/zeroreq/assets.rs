@@ -1,9 +1,9 @@
 use std::borrow::Cow;
 
-use gpui::{AssetSource, Result, SharedString};
+use gpui_kit::{AssetSource, Result, SharedString};
 
 /// Serves Zeroreq's own icons, falling back to the icons bundled with
-/// gpui-component.
+/// GPUI Kit.
 pub struct Assets;
 
 const LAYOUT_SIDEBAR_FILLED: &[u8] = include_bytes!("../../assets/icons/layout-sidebar-filled.svg");
@@ -25,11 +25,11 @@ impl AssetSource for Assets {
             return Ok(Some(Cow::Borrowed(*bytes)));
         }
 
-        gpui_component_assets::Assets.load(path)
+        gpui_kit::assets::Assets.load(path)
     }
 
     fn list(&self, path: &str) -> Result<Vec<SharedString>> {
-        let mut paths = gpui_component_assets::Assets.list(path)?;
+        let mut paths = gpui_kit::assets::Assets.list(path)?;
         paths.extend(
             LOCAL_ICONS
                 .iter()

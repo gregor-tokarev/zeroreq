@@ -1,4 +1,4 @@
-use gpui::*;
+use gpui_kit::*;
 use std::sync::Arc;
 
 mod zeroreq;
@@ -14,12 +14,12 @@ fn main() {
     let http_client = reqwest_client::ReqwestClient::user_agent(&user_agent)
         .expect("Failed to initialize the HTTP client");
 
-    let app = gpui_platform::application()
+    let app = gpui_kit::application()
         .with_assets(zeroreq::assets::Assets)
         .with_http_client(Arc::new(http_client));
 
     app.run(move |cx: &mut App| {
-        gpui_component::init(cx);
+        gpui_kit::init(cx);
         keybindings_service::init(cx);
 
         if let Some(home) = std::env::home_dir()

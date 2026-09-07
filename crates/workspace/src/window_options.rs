@@ -1,4 +1,4 @@
-use gpui::{App, TitlebarOptions, WindowBounds, WindowKind, WindowOptions, point, px};
+use gpui_kit::{App, TitlebarOptions, WindowBounds, WindowKind, WindowOptions, point, px};
 
 pub(crate) fn use_window_options(cx: &mut App) -> WindowOptions {
     let display = cx.primary_display();
@@ -17,7 +17,7 @@ pub(crate) fn use_window_options(cx: &mut App) -> WindowOptions {
         is_movable: true,
         kind: WindowKind::Normal,
         display_id,
-        window_min_size: Some(gpui::Size {
+        window_min_size: Some(gpui_kit::Size {
             width: px(360.0),
             height: px(240.0),
         }),

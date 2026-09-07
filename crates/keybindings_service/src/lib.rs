@@ -10,7 +10,7 @@ use std::{
     path::PathBuf,
 };
 
-use gpui::{Action, App, BorrowAppContext, Global, InvalidKeystrokeError};
+use gpui_kit::{Action, App, BorrowAppContext, Global, InvalidKeystrokeError};
 use thiserror::Error;
 
 #[derive(Default)]

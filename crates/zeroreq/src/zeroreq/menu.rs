@@ -1,4 +1,4 @@
-use gpui::{App, Menu, MenuItem};
+use gpui_kit::{App, Menu, MenuItem};
 
 use crate::zeroreq::actions::{CheckForUpdates, Quit};
 

@@ -1,5 +1,5 @@
-use gpui::{prelude::*, *};
-use gpui_component::{ActiveTheme as _, Disableable as _, button::*, h_flex, v_flex};
+use gpui_kit::component::{ActiveTheme as _, Disableable as _, button::*, h_flex, v_flex};
+use gpui_kit::{prelude::*, *};
 
 use updater::{UpdateStatus, Updater};
 

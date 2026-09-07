@@ -1,5 +1,5 @@
-use gpui::*;
-use gpui_component::{ActiveTheme as _, Colorize as _, IconNamed, Sizable as _, button::*};
+use gpui_kit::component::{ActiveTheme as _, Colorize as _, IconNamed, Sizable as _, button::*};
+use gpui_kit::*;
 
 use crate::actions::{OpenSettings, ToggleLeftSidebar};
 
@@ -73,7 +73,7 @@ impl Render for BottomPanel {
                 Button::new("open-settings")
                     .ghost()
                     .small()
-                    .icon(gpui_component::IconName::Settings2)
+                    .icon(gpui_kit::component::IconName::Settings2)
                     .tooltip_with_action("Settings", &OpenSettings, None)
                     .on_click(|_, window, cx| {
                         window.dispatch_action(OpenSettings.boxed_clone(), cx);

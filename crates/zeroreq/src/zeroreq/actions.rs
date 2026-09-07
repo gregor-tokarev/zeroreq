@@ -1,4 +1,4 @@
-use gpui::{App, Entity, actions};
+use gpui_kit::{App, Entity, actions};
 
 use super::quit;
 

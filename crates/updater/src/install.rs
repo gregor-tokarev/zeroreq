@@ -5,7 +5,7 @@ use std::{
     sync::Arc,
 };
 
-use gpui::http_client::{AsyncBody, HttpClient};
+use gpui_kit::http_client::{AsyncBody, HttpClient};
 use sha2::{Digest, Sha256};
 use smol::{
     fs::File,

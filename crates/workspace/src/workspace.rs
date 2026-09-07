@@ -6,11 +6,11 @@ use crate::layout::{
 };
 use crate::settings::{Settings, SettingsEvent, SettingsPage};
 use collection::CollectionRegistry;
-use gpui::{prelude::FluentBuilder as _, *};
-use gpui_component::{
+use gpui_kit::component::{
     resizable::{ResizableState, h_resizable, resizable_panel},
     *,
 };
+use gpui_kit::{prelude::FluentBuilder as _, *};
 use updater::Updater;
 
 struct Layout {
@@ -84,7 +84,7 @@ impl Layout {
         if let Some(focus) = self.previous_focus.take() {
             window.focus(&focus, cx);
         } else {
-            window.blur();
+            window.blur(cx);
         }
 
         cx.notify();
@@ -192,13 +192,13 @@ mod tests {
     use crate::actions::{CloseSettings, ToggleLeftSidebar};
     use crate::layout::bottom_panel::TOGGLE_SIDEBAR_BUTTON;
     use collection::CollectionRegistry;
-    use gpui::{Modifiers, TestAppContext, px};
+    use gpui_kit::{Modifiers, TestAppContext, px};
     use std::sync::Arc;
 
-    #[gpui::test]
+    #[gpui_kit::test]
     fn settings_survives_closing_and_reopening(cx: &mut TestAppContext) {
         cx.update(|cx| {
-            gpui_component::init(cx);
+            gpui_kit::init(cx);
             crate::actions::init(cx);
         });
 
@@ -246,10 +246,10 @@ mod tests {
         }
     }
 
-    #[gpui::test]
+    #[gpui_kit::test]
     fn toggle_sidebar_action(cx: &mut TestAppContext) {
         cx.update(|cx| {
-            gpui_component::init(cx);
+            gpui_kit::init(cx);
             crate::actions::init(cx);
         });
 

@@ -1,4 +1,4 @@
-use gpui::{App, actions};
+use gpui_kit::{App, actions};
 
 actions!(
     workspace,
