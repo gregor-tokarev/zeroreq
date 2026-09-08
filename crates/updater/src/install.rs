@@ -27,17 +27,17 @@ pub(super) async fn download_and_prepare_update(
 
     if !is_directory_writable(install_dir) {
         return Err(format!(
-            "{} is not writable. Move Zeroreq to a folder owned by your user and try again.",
+            "{} is not writable. Move Request Eagle to a folder owned by your user and try again.",
             install_dir.display()
         ));
     }
 
-    let work_dir = env::temp_dir().join(format!("zeroreq-update-{}", std::process::id()));
+    let work_dir = env::temp_dir().join(format!("request-eagle-update-{}", std::process::id()));
     let _ = fs::remove_dir_all(&work_dir);
     fs::create_dir_all(&work_dir)
         .map_err(|error| format!("Could not create the update directory: {error}"))?;
 
-    let archive = work_dir.join("Zeroreq.zip");
+    let archive = work_dir.join("Request Eagle.zip");
     download_update(&manifest.url, &archive, http_client).await?;
 
     verify_sha256(&archive, &manifest.sha256)?;
@@ -53,7 +53,7 @@ pub(super) async fn download_and_prepare_update(
         return Err("The update archive could not be extracted.".into());
     }
 
-    let new_app = work_dir.join("Zeroreq.app");
+    let new_app = work_dir.join("Request Eagle.app");
     verify_apple_signature(&new_app)?;
 
     launch_installer(&current_app, &new_app, &work_dir)
@@ -128,8 +128,8 @@ fn verify_sha256(path: &Path, expected: &str) -> Result<(), String> {
 }
 
 fn verify_apple_signature(app: &Path) -> Result<(), String> {
-    if !app.join("Contents/MacOS/zeroreq").is_file() {
-        return Err("The update does not contain a valid Zeroreq app bundle.".into());
+    if !app.join("Contents/MacOS/request-eagle").is_file() {
+        return Err("The update does not contain a valid Request Eagle app bundle.".into());
     }
 
     let verify = Command::new("/usr/bin/codesign")
@@ -198,7 +198,7 @@ fi
 "#;
 
     Command::new("/bin/sh")
-        .args(["-c", SCRIPT, "zeroreq-updater"])
+        .args(["-c", SCRIPT, "request-eagle-updater"])
         .arg(std::process::id().to_string())
         .arg(current_app)
         .arg(new_app)
@@ -214,23 +214,23 @@ fi
 
 pub(super) fn current_app_bundle() -> Result<PathBuf, String> {
     let executable =
-        env::current_exe().map_err(|error| format!("Could not locate Zeroreq: {error}"))?;
+        env::current_exe().map_err(|error| format!("Could not locate Request Eagle: {error}"))?;
 
-    // Zeroreq.app/Contents/MacOS/zeroreq → Zeroreq.app
+    // Request Eagle.app/Contents/MacOS/request-eagle → Request Eagle.app
     let app = executable
         .ancestors()
         .nth(3)
-        .ok_or_else(|| "Zeroreq is not running from an app bundle.".to_string())?;
+        .ok_or_else(|| "Request Eagle is not running from an app bundle.".to_string())?;
 
     if app.extension().and_then(|value| value.to_str()) != Some("app") {
-        return Err("Automatic updates are only available from Zeroreq.app.".into());
+        return Err("Automatic updates are only available from Request Eagle.app.".into());
     }
 
     Ok(app.to_path_buf())
 }
 
 fn is_directory_writable(directory: &Path) -> bool {
-    let probe = directory.join(format!(".zeroreq-write-test-{}", std::process::id()));
+    let probe = directory.join(format!(".request-eagle-write-test-{}", std::process::id()));
     let writable = fs::write(&probe, []).is_ok();
     let _ = fs::remove_file(&probe);
 

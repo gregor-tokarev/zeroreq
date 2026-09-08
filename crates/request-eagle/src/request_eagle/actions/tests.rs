@@ -21,7 +21,7 @@ fn menu_starts_check_and_opens_general(cx: &mut TestAppContext) {
             async {
                 Ok(Response::builder()
                     .status(200)
-                    .body(r#"{"version":"99.0.0","url":"https://example.test/Zeroreq.zip","sha256":"abc123"}"#.into())
+                    .body(r#"{"version":"99.0.0","url":"https://example.test/RequestEagle.zip","sha256":"abc123"}"#.into())
                     .unwrap())
             }
         }

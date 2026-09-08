@@ -6,7 +6,7 @@ members = [
     "crates/theme",
     "crates/updater",
     "crates/workspace",
-    "crates/zeroreq",
+    "crates/request-eagle",
 ]
 resolver = "3"
 

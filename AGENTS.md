@@ -1,6 +1,6 @@
-You are working in project called Zeroreq. It's postman alternative written in Rust's gui framework GPUI and GPUI-component
+You are working in project called Request Eagle. It's postman alternative written in Rust's gui framework GPUI and GPUI-component
 
-You've might work in worktree with other agents in parallel, so if you want to test something with computer-use open sepparate application with some label like: Zeroreq(sidebar facelift) or Zeroreq(Codebase rewrite)
+You've might work in worktree with other agents in parallel, so if you want to test something with computer-use open sepparate application with some label like: Request Eagle(sidebar facelift) or Request Eagle(Codebase rewrite)
 
 # Code quality
 

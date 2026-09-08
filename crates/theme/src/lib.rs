@@ -1,4 +1,4 @@
-//! Theme setup shared by Zeroreq windows.
+//! Theme setup shared by Request Eagle windows.
 
 use gpui_kit::component::{Theme, ThemeRegistry};
 use gpui_kit::{App, SharedString};

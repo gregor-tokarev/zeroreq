@@ -258,7 +258,7 @@ mod tests {
 
     fn test_directory() -> PathBuf {
         std::env::temp_dir().join(format!(
-            "zeroreq-collection-{}-{}",
+            "request-eagle-collection-{}-{}",
             std::process::id(),
             SystemTime::now()
                 .duration_since(SystemTime::UNIX_EPOCH)

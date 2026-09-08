@@ -5,7 +5,7 @@ use super::quit;
 #[cfg(test)]
 mod tests;
 
-actions!(zeroreq, [CheckForUpdates, Quit]);
+actions!(request_eagle, [CheckForUpdates, Quit]);
 
 pub fn init(updater: Entity<updater::Updater>, cx: &mut App) {
     keybindings_service::set_binding("cmd-q", Quit, None, cx)

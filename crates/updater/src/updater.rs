@@ -15,8 +15,7 @@ use semver::Version;
 use serde::Deserialize;
 use smol::io::AsyncReadExt;
 
-const UPDATE_MANIFEST_URL: &str =
-    "https://github.com/gregor-tokarev/zeroreq/releases/latest/download/zeroreq-update.json";
+const UPDATE_MANIFEST_URL: &str = "https://github.com/gregor-tokarev/request-eagle/releases/latest/download/request-eagle-update.json";
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct UpdateManifest {

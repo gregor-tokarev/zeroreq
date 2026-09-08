@@ -4,10 +4,10 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 VERSION="${VERSION:?VERSION is required}"
 DIST_DIR="${DIST_DIR:-$ROOT/dist}"
-APP="$DIST_DIR/Zeroreq.app"
-ZIP="$DIST_DIR/Zeroreq-$VERSION-arm64.zip"
-DMG="$DIST_DIR/Zeroreq-$VERSION-arm64.dmg"
-NOTARY_ZIP="$DIST_DIR/Zeroreq-notarization.zip"
+APP="$DIST_DIR/Request Eagle.app"
+ZIP="$DIST_DIR/RequestEagle-$VERSION-arm64.zip"
+DMG="$DIST_DIR/RequestEagle-$VERSION-arm64.dmg"
+NOTARY_ZIP="$DIST_DIR/RequestEagle-notarization.zip"
 
 test -d "$APP"
 test -n "${APPLE_ID:?APPLE_ID is required}"
@@ -29,10 +29,10 @@ xcrun stapler validate "$APP"
 
 DMG_SOURCE="$(mktemp -d)"
 trap 'rm -rf "$DMG_SOURCE" "$NOTARY_ZIP"' EXIT
-cp -R "$APP" "$DMG_SOURCE/Zeroreq.app"
+cp -R "$APP" "$DMG_SOURCE/Request Eagle.app"
 ln -s /Applications "$DMG_SOURCE/Applications"
 hdiutil create \
-  -volname "Zeroreq $VERSION" \
+  -volname "Request Eagle $VERSION" \
   -srcfolder "$DMG_SOURCE" \
   -ov \
   -format UDZO \

@@ -56,7 +56,7 @@ jobs:
         shell: bash
         run: |
           test "$(uname -m)" = "arm64"
-          cargo_version="$(sed -n '/^name = "zeroreq"$/{n;s/version = "\([^"]*\)"/\1/p;q;}' crates/zeroreq/Cargo.toml)"
+          cargo_version="$(sed -n '/^name = "request-eagle"$/{n;s/version = "\([^"]*\)"/\1/p;q;}' crates/request-eagle/Cargo.toml)"
           test "$cargo_version" = "${{ steps.release.outputs.version }}"
 
       - name: Cache Cargo
@@ -75,7 +75,7 @@ jobs:
         shell: bash
         run: |
           certificate_path="$RUNNER_TEMP/developer-id.p12"
-          keychain_path="$RUNNER_TEMP/zeroreq-signing.keychain-db"
+          keychain_path="$RUNNER_TEMP/request-eagle-signing.keychain-db"
           keychain_password="$(openssl rand -hex 24)"
 
           printf '%s' "$APPLE_CERTIFICATE_P12" | base64 --decode > "$certificate_path"
@@ -114,13 +114,13 @@ jobs:
           VERSION: ${{ steps.release.outputs.version }}
         shell: bash
         run: |
-          codesign --verify --deep --strict --verbose=2 dist/Zeroreq.app
-          test "$(lipo -archs dist/Zeroreq.app/Contents/MacOS/zeroreq)" = "arm64"
-          spctl --assess --type execute --verbose=2 dist/Zeroreq.app
+          codesign --verify --deep --strict --verbose=2 "dist/Request Eagle.app"
+          test "$(lipo -archs "dist/Request Eagle.app/Contents/MacOS/request-eagle")" = "arm64"
+          spctl --assess --type execute --verbose=2 "dist/Request Eagle.app"
           spctl --assess --type open --context context:primary-signature --verbose=2 \
-            "dist/Zeroreq-$VERSION-arm64.dmg"
-          xcrun stapler validate dist/Zeroreq.app
-          xcrun stapler validate "dist/Zeroreq-$VERSION-arm64.dmg"
+            "dist/RequestEagle-$VERSION-arm64.dmg"
+          xcrun stapler validate "dist/Request Eagle.app"
+          xcrun stapler validate "dist/RequestEagle-$VERSION-arm64.dmg"
 
       - name: Create updater manifest and checksums
         env:
@@ -128,20 +128,20 @@ jobs:
           TAG: ${{ steps.release.outputs.tag }}
         shell: bash
         run: |
-          zip_name="Zeroreq-$VERSION-arm64.zip"
+          zip_name="RequestEagle-$VERSION-arm64.zip"
           zip_sha="$(shasum -a 256 "dist/$zip_name" | awk '{print $1}')"
           jq -n \
             --arg version "$VERSION" \
             --arg url "https://github.com/${GITHUB_REPOSITORY}/releases/download/$TAG/$zip_name" \
             --arg sha256 "$zip_sha" \
             '{version: $version, url: $url, sha256: $sha256}' \
-            > dist/zeroreq-update.json
+            > dist/request-eagle-update.json
           (
             cd dist
             shasum -a 256 \
               "$zip_name" \
-              "Zeroreq-$VERSION-arm64.dmg" \
-              zeroreq-update.json \
+              "RequestEagle-$VERSION-arm64.dmg" \
+              request-eagle-update.json \
               > SHA256SUMS
           )
 
@@ -156,8 +156,8 @@ jobs:
           gh release create "$TAG" \
             --verify-tag \
             --generate-notes \
-            --title "Zeroreq $VERSION" \
-            "dist/Zeroreq-$VERSION-arm64.dmg" \
-            "dist/Zeroreq-$VERSION-arm64.zip" \
-            dist/zeroreq-update.json \
+            --title "Request Eagle $VERSION" \
+            "dist/RequestEagle-$VERSION-arm64.dmg" \
+            "dist/RequestEagle-$VERSION-arm64.zip" \
+            dist/request-eagle-update.json \
             dist/SHA256SUMS

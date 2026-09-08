@@ -3,8 +3,8 @@
 set -uo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-APP="$ROOT/target/debug/Zeroreq.app/Contents/MacOS/zeroreq"
-POLL_INTERVAL="${ZERO_REQ_DEV_POLL_INTERVAL:-0.5}"
+APP="$ROOT/target/debug/Request Eagle.app/Contents/MacOS/request-eagle"
+POLL_INTERVAL="${REQUEST_EAGLE_DEV_POLL_INTERVAL:-0.5}"
 APP_PID=""
 
 snapshot() {
@@ -58,7 +58,7 @@ while true; do
 	LAST_SNAPSHOT="$CURRENT_SNAPSHOT"
 	stop_app
 	echo
-	echo "Change detected; rebuilding Zeroreq..."
+	echo "Change detected; rebuilding Request Eagle..."
 
 	if "${MAKE:-make}" --no-print-directory -C "$ROOT" bundle; then
 		# If another edit landed during the build, rebuild once more before launch.
@@ -67,7 +67,7 @@ while true; do
 			continue
 		fi
 
-		echo "Launching Zeroreq..."
+		echo "Launching Request Eagle..."
 		"$APP" &
 		APP_PID=$!
 	else

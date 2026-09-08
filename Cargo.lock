@@ -5714,6 +5714,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "19b30a45b0cd0bcca8037f3d0dc3421eaf95327a17cad11964fb8179b4fc4832"
 
 [[package]]
+name = "request-eagle"
+version = "0.1.4"
+dependencies = [
+ "collection",
+ "gpui-kit",
+ "gpui-pre-reqwest-client",
+ "keybindings_service",
+ "theme",
+ "updater",
+ "workspace",
+]
+
+[[package]]
 name = "resvg"
 version = "0.45.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -9103,19 +9116,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
-]
-
-[[package]]
-name = "zeroreq"
-version = "0.1.4"
-dependencies = [
- "collection",
- "gpui-kit",
- "gpui-pre-reqwest-client",
- "keybindings_service",
- "theme",
- "updater",
- "workspace",
 ]
 
 [[package]]
