@@ -67,6 +67,8 @@ jobs:
             ~/.cargo/registry
             target
           key: macos-arm64-${{ hashFiles('Cargo.lock') }}
+          restore-keys: |
+            macos-arm64-
 
       - name: Import Developer ID certificate
         env:

@@ -30,6 +30,8 @@ pub fn apply(name: &str, cx: &mut App) -> bool {
     };
 
     Theme::global_mut(cx).apply_config(&config);
+    Theme::sync_base(cx);
+
     cx.refresh_windows();
 
     true
@@ -41,4 +43,32 @@ pub fn available_themes(cx: &App) -> Vec<SharedString> {
         .into_iter()
         .map(|theme| theme.name.clone())
         .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use gpui_kit::{TestAppContext, base};
+
+    #[gpui_kit::test]
+    fn resize_handles_follow_the_applied_theme(cx: &mut TestAppContext) {
+        cx.update(|cx| {
+            gpui_kit::init(cx);
+            init(cx);
+
+            for name in [DEFAULT_THEME, "Ayu Light", "Ayu Dark"] {
+                assert!(apply(name, cx));
+
+                let theme = Theme::global(cx);
+                let base_theme = base::Theme::global(cx);
+
+                assert_eq!(base_theme.resizable.handle, Some(theme.border), "{name}");
+                assert_eq!(
+                    base_theme.resizable.active_handle,
+                    Some(theme.drag_border),
+                    "{name}"
+                );
+            }
+        });
+    }
 }

@@ -5,3 +5,6 @@ edition = "2024"
 
 [dependencies]
 gpui-kit = { workspace = true, features = ["component"] }
+
+[dev-dependencies]
+gpui-kit = { workspace = true, features = ["test-support"] }
