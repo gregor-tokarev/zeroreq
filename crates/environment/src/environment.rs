@@ -111,7 +111,7 @@ mod tests {
     #[test]
     fn saves_and_loads_entries() {
         let path = std::env::temp_dir().join(format!(
-            "zeroreq-environment-{}-save.toml",
+            "request-eagle-environment-{}-save.toml",
             std::process::id()
         ));
         let environment = Environment::from_toml(

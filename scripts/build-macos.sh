@@ -2,11 +2,11 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-VERSION="${VERSION:-$(sed -n '/^name = "zeroreq"$/{n;s/version = "\\([^"]*\\)"/\\1/p;q;}' "$ROOT/crates/zeroreq/Cargo.toml")}"
+VERSION="${VERSION:-$(sed -n '/^name = "request-eagle"$/{n;s/version = "\([^"]*\)"/\1/p;q;}' "$ROOT/crates/request-eagle/Cargo.toml")}"
 BUILD_VERSION="${BUILD_VERSION:-${VERSION//[^0-9]/}}"
 BUILD_VERSION="${BUILD_VERSION:-1}"
 DIST_DIR="${DIST_DIR:-$ROOT/dist}"
-APP="$DIST_DIR/Zeroreq.app"
+APP="$DIST_DIR/Request Eagle.app"
 SIGN_IDENTITY="${SIGN_IDENTITY:--}"
 TARGET="${TARGET:-aarch64-apple-darwin}"
 
@@ -14,10 +14,10 @@ rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 
 rustup target add "$TARGET"
-cargo build --locked --release -p zeroreq --target "$TARGET"
-cp "$ROOT/target/$TARGET/release/zeroreq" "$APP/Contents/MacOS/zeroreq"
+cargo build --locked --release -p request-eagle --target "$TARGET"
+cp "$ROOT/target/$TARGET/release/request-eagle" "$APP/Contents/MacOS/request-eagle"
 
-chmod 755 "$APP/Contents/MacOS/zeroreq"
+chmod 755 "$APP/Contents/MacOS/request-eagle"
 cp "$ROOT/packaging/macos/AppIcon.icns" "$APP/Contents/Resources/AppIcon.icns"
 sed \
   -e "s/__VERSION__/$VERSION/g" \

@@ -27,7 +27,7 @@ impl Render for GeneralSettings {
         let updater = self.updater.read(cx);
         let status = updater.status();
         let message = match status {
-            UpdateStatus::Idle => "Check for a new version of Zeroreq.".to_owned(),
+            UpdateStatus::Idle => "Check for a new version of Request Eagle.".to_owned(),
             UpdateStatus::Checking => "Checking for updates…".to_owned(),
             UpdateStatus::UpToDate => "You're up to date.".to_owned(),
             UpdateStatus::Available(manifest) => {
@@ -63,7 +63,7 @@ impl Render for GeneralSettings {
                     .child(
                         v_flex()
                             .gap_2()
-                            .child(div().font_weight(FontWeight::MEDIUM).child("Zeroreq"))
+                            .child(div().font_weight(FontWeight::MEDIUM).child("Request Eagle"))
                             .child(
                                 div()
                                     .text_sm()
@@ -115,7 +115,7 @@ impl Render for GeneralSettings {
                     })
                     .child(message)
                     .when(installing, |this| {
-                        this.child("Zeroreq will relaunch when the update is installed.")
+                        this.child("Request Eagle will relaunch when the update is installed.")
                     }),
             )
     }

@@ -59,7 +59,7 @@ fn installation_cannot_be_interrupted_or_restarted(cx: &mut TestAppContext) {
 fn manifest(version: &str) -> String {
     serde_json::json!({
         "version": version,
-        "url": "https://example.test/Zeroreq.zip",
+        "url": "https://example.test/RequestEagle.zip",
         "sha256": "abc123",
     })
     .to_string()

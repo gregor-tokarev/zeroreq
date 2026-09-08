@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use gpui_kit::{AssetSource, Result, SharedString};
 
-/// Serves Zeroreq's own icons, falling back to the icons bundled with
+/// Serves Request Eagle's own icons, falling back to the icons bundled with
 /// GPUI Kit.
 pub struct Assets;
 

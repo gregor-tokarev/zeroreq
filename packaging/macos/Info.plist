@@ -3,17 +3,17 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleDisplayName</key>
-    <string>Zeroreq</string>
+    <string>Request Eagle</string>
     <key>CFBundleExecutable</key>
-    <string>zeroreq</string>
+    <string>request-eagle</string>
     <key>CFBundleIconFile</key>
     <string>AppIcon</string>
     <key>CFBundleIdentifier</key>
-    <string>com.egortokarev.zeroreq</string>
+    <string>com.egortokarev.requesteagle</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
-    <string>Zeroreq</string>
+    <string>Request Eagle</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>

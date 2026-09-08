@@ -1,18 +1,18 @@
 use gpui_kit::{App, Menu, MenuItem};
 
-use crate::zeroreq::actions::{CheckForUpdates, Quit};
+use crate::request_eagle::actions::{CheckForUpdates, Quit};
 
 pub fn use_menus(_: &mut App) -> Vec<Menu> {
     vec![Menu {
-        name: "Zeroreq".into(),
+        name: "Request Eagle".into(),
         disabled: false,
         items: vec![
-            MenuItem::action("About Zeroreq", workspace::OpenGeneralSettings),
+            MenuItem::action("About Request Eagle", workspace::OpenGeneralSettings),
             MenuItem::action("Check for Updates…", CheckForUpdates),
             MenuItem::separator(),
             MenuItem::action("Settings…", workspace::OpenSettings),
             MenuItem::separator(),
-            MenuItem::action("Quit Zeroreq", Quit),
+            MenuItem::action("Quit Request Eagle", Quit),
         ],
     }]
 }

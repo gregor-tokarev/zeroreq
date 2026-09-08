@@ -1,5 +1,5 @@
 [package]
-name = "zeroreq"
+name = "request-eagle"
 version = "0.1.4"
 edition = "2024"
 
@@ -9,7 +9,7 @@ gpui-kit = { workspace = true, features = ["component", "assets"] }
 keybindings_service = { path = "../keybindings_service" }
 reqwest_client.workspace = true
 updater = { path = "../updater" }
-zeroreq-theme = { package = "theme", path = "../theme" }
+request-eagle-theme = { package = "theme", path = "../theme" }
 workspace = { package = "workspace", path = "../workspace" }
 
 [dev-dependencies]

@@ -14,7 +14,7 @@ use updater::UpdateStatus;
 fn manifest(version: &str) -> String {
     serde_json::json!({
         "version": version,
-        "url": "https://example.test/Zeroreq.zip",
+        "url": "https://example.test/RequestEagle.zip",
         "sha256": "abc123",
     })
     .to_string()
@@ -29,7 +29,7 @@ fn checking_survives_closing_settings_and_does_not_open_a_window(cx: &mut TestAp
         move |request| {
             assert_eq!(
                 request.uri().to_string(),
-                "https://github.com/gregor-tokarev/zeroreq/releases/latest/download/zeroreq-update.json"
+                "https://github.com/gregor-tokarev/request-eagle/releases/latest/download/request-eagle-update.json"
             );
             requests.fetch_add(1, Ordering::SeqCst);
             let wait = wait.clone();
@@ -157,7 +157,7 @@ fn failed_check_can_be_retried_from_general(cx: &mut TestAppContext) {
     view.read(|cx| {
         assert!(matches!(
             updater.read(cx).status(),
-            UpdateStatus::Error(error) if error.contains("only available from Zeroreq.app")
+            UpdateStatus::Error(error) if error.contains("only available from Request Eagle.app")
         ));
     });
 

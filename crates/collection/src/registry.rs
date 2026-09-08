@@ -25,11 +25,11 @@ impl CollectionRegistry {
         self.collections.push(collection);
     }
 
-    /// Loads collections from `~/.zeroreq/collections`.
+    /// Loads collections from `~/.request-eagle/collections`.
     pub fn load() -> Result<Self, CollectionRegistryLoadError> {
         let home = dirs::home_dir().ok_or(CollectionRegistryLoadError::HomeDirectoryUnavailable)?;
 
-        Self::from_path(home.join(".zeroreq").join("collections"))
+        Self::from_path(home.join(".request-eagle").join("collections"))
     }
 
     pub fn from_path(path: impl AsRef<Path>) -> Result<Self, CollectionRegistryLoadError> {
@@ -152,7 +152,7 @@ mod tests {
 
     fn test_directory() -> PathBuf {
         std::env::temp_dir().join(format!(
-            "zeroreq-collection-registry-{}-{}",
+            "request-eagle-collection-registry-{}-{}",
             std::process::id(),
             SystemTime::now()
                 .duration_since(SystemTime::UNIX_EPOCH)
