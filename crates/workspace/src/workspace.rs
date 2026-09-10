@@ -153,7 +153,7 @@ impl Render for Layout {
             } else {
                 0.0
             },
-            Transition::new(Duration::from_millis(200)).ease(ease_in_out_cubic),
+            Transition::new(Duration::from_millis(150)).ease(ease_in_out_cubic),
             window,
             cx,
         );
