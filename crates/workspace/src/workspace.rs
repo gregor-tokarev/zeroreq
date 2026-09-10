@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 
 use crate::actions::{OpenGeneralSettings, OpenSettings, ToggleLeftSidebar};
 use crate::layout::{
@@ -6,7 +6,9 @@ use crate::layout::{
 };
 use crate::settings::{Settings, SettingsEvent, SettingsPage};
 use collection::CollectionRegistry;
+use gpui_kit::base::motion::{self, Transition};
 use gpui_kit::component::{
+    animation::ease_in_out_cubic,
     resizable::{ResizableState, h_resizable, resizable_panel},
     *,
 };
@@ -143,18 +145,41 @@ fn on_toggle_sidebar(layout: &Entity<Layout>, cx: &mut App) {
 }
 
 impl Render for Layout {
-    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let sidebar_progress = motion::transition(
+            "sidebar-visibility",
+            if *self.sidebar_visible.read(cx) {
+                1.0
+            } else {
+                0.0
+            },
+            Transition::new(Duration::from_millis(200)).ease(ease_in_out_cubic),
+            window,
+            cx,
+        );
+
+        let sidebar_width = self
+            .main_split
+            .read(cx)
+            .sizes()
+            .first()
+            .copied()
+            .unwrap_or(px(200.))
+            .clamp(px(200.), px(400.));
+
         let workspace = v_flex()
             .size_full()
             .when(self.settings_visible, |this| this.hidden())
             .child(self.top_panel.clone())
             .child(
-                div().flex_1().min_h_0().child(
+                div().flex_1().min_h_0().overflow_hidden().child(
                     h_resizable("main_split")
                         .with_state(&self.main_split)
                         .child(
                             resizable_panel()
-                                .visible(*self.sidebar_visible.read(cx))
+                                .visible(sidebar_progress > 0.0)
+                                .flex_none()
+                                .ml(sidebar_width * (sidebar_progress - 1.0))
                                 .size_range(px(200.)..px(400.))
                                 .child(self.sidebar.clone()),
                         )
@@ -250,6 +275,7 @@ mod tests {
     fn toggle_sidebar_action(cx: &mut TestAppContext) {
         cx.update(|cx| {
             gpui_kit::init(cx);
+            cx.set_reduce_motion(true);
             crate::actions::init(cx);
         });
 

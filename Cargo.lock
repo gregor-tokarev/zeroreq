@@ -5721,6 +5721,7 @@ dependencies = [
  "gpui-kit",
  "gpui-pre-reqwest-client",
  "keybindings_service",
+ "objc2-app-kit 0.3.2",
  "theme",
  "updater",
  "workspace",
