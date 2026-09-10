@@ -25,6 +25,12 @@ fn main() {
 
     app.run(move |cx: &mut App| {
         gpui_kit::init(cx);
+
+        #[cfg(target_os = "macos")]
+        cx.set_reduce_motion(
+            objc2_app_kit::NSWorkspace::sharedWorkspace().accessibilityDisplayShouldReduceMotion(),
+        );
+
         keybindings_service::init(cx);
 
         if let Some(home) = std::env::home_dir()
