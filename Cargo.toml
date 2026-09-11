@@ -3,6 +3,7 @@ members = [
     "crates/collection",
     "crates/environment",
     "crates/keybindings_service",
+    "crates/preferences",
     "crates/theme",
     "crates/updater",
     "crates/workspace",

@@ -2484,6 +2484,7 @@ dependencies = [
  "gpui-pre-util",
  "gpui-pre-util-macros",
  "gpui-pre-ztracing",
+ "hdrhistogram",
  "heapless",
  "image",
  "inventory",
@@ -3095,6 +3096,16 @@ name = "hashbrown"
 version = "0.17.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ed5909b6e89a2db4456e54cd5f673791d7eca6732202bbf2a9cc504fe2f9b84a"
+
+[[package]]
+name = "hdrhistogram"
+version = "7.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f49d1053f4708f0af3cf9fc5bffc7e68a914a3c45becb231c80068c9c3f78bea"
+dependencies = [
+ "byteorder",
+ "num-traits",
+]
 
 [[package]]
 name = "heapless"
@@ -5167,6 +5178,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "925383efa346730478fb4838dbe9137d2a47675ad789c546d150a6e1dd4ab31c"
 
 [[package]]
+name = "preferences"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "gpui-kit",
+ "serde",
+ "serde_json",
+ "tempfile",
+]
+
+[[package]]
 name = "presser"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5719,9 +5741,11 @@ version = "0.1.7"
 dependencies = [
  "collection",
  "gpui-kit",
+ "gpui-pre",
  "gpui-pre-reqwest-client",
  "keybindings_service",
  "objc2-app-kit 0.3.2",
+ "preferences",
  "theme",
  "updater",
  "workspace",
@@ -6897,6 +6921,7 @@ name = "theme"
 version = "0.1.0"
 dependencies = [
  "gpui-kit",
+ "preferences",
 ]
 
 [[package]]
@@ -8720,8 +8745,10 @@ dependencies = [
  "collection",
  "gpui-kit",
  "keybindings_service",
+ "preferences",
  "serde_json",
  "smol",
+ "theme",
  "updater",
 ]
 

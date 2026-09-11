@@ -1,9 +1,4 @@
-#[path = "install.rs"]
-mod install;
-
-#[cfg(test)]
-#[path = "tests.rs"]
-mod tests;
+use super::install;
 
 use std::sync::Arc;
 
@@ -20,8 +15,8 @@ const UPDATE_MANIFEST_URL: &str = "https://github.com/gregor-tokarev/request-eag
 #[derive(Clone, Debug, Deserialize)]
 pub struct UpdateManifest {
     pub version: String,
-    url: String,
-    sha256: String,
+    pub(super) url: String,
+    pub(super) sha256: String,
 }
 
 #[derive(Clone, Debug)]
@@ -35,8 +30,8 @@ pub enum UpdateStatus {
 }
 
 pub struct Updater {
-    current_version: &'static str,
-    status: UpdateStatus,
+    pub(super) current_version: &'static str,
+    pub(super) status: UpdateStatus,
 }
 
 impl Updater {
@@ -117,7 +112,7 @@ pub fn init(current_version: &'static str, cx: &mut App) -> Entity<Updater> {
     updater
 }
 
-async fn check_for_update(
+pub(super) async fn check_for_update(
     http_client: Arc<dyn HttpClient>,
     current_version: &str,
 ) -> Result<Option<UpdateManifest>, String> {

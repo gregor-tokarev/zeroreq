@@ -1,6 +1,9 @@
 use gpui_kit::{KeyBinding, KeyContext, Keystroke, TestApp, actions};
 
 use super::*;
+use crate::Binding;
+use gpui_kit::{Action, App};
+use std::collections::BTreeMap;
 
 actions!(keybindings_service_tests, [FirstAction, OtherAction]);
 

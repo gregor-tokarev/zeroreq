@@ -3,13 +3,13 @@
 set -uo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-APP="$ROOT/target/debug/Request Eagle.app/Contents/MacOS/request-eagle"
+APP="$ROOT/target/release/Request Eagle (Dev).app/Contents/MacOS/request-eagle"
 POLL_INTERVAL="${REQUEST_EAGLE_DEV_POLL_INTERVAL:-0.5}"
 APP_PID=""
 
 snapshot() {
 	{
-		for file in Cargo.toml Cargo.lock Makefile; do
+		for file in Cargo.toml Cargo.lock Makefile scripts/dev.sh; do
 			test ! -f "$ROOT/$file" || printf '%s\n' "$file"
 		done
 		find "$ROOT/crates" "$ROOT/packaging/macos" -type f -print |
@@ -44,7 +44,7 @@ shutdown() {
 trap shutdown INT TERM
 trap stop_app EXIT
 
-echo "Watching Cargo and application files. Press Ctrl-C to stop."
+echo "Watching Cargo and application files. Release build with GPUI frame monitor. Press Ctrl-C to stop."
 
 LAST_SNAPSHOT=""
 while true; do
@@ -60,7 +60,9 @@ while true; do
 	echo
 	echo "Change detected; rebuilding Request Eagle..."
 
-	if "${MAKE:-make}" --no-print-directory -C "$ROOT" bundle; then
+	if "${MAKE:-make}" --no-print-directory -C "$ROOT" bundle \
+		PROFILE=release FEATURES=dev-profiler \
+		APP_NAME="Request Eagle (Dev)" BUNDLE_ID=com.egortokarev.requesteagle.dev; then
 		# If another edit landed during the build, rebuild once more before launch.
 		if test "$(snapshot)" != "$LAST_SNAPSHOT"; then
 			LAST_SNAPSHOT=""

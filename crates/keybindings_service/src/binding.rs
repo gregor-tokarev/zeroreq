@@ -13,13 +13,13 @@ pub struct Binding {
     pub context: Option<String>,
 }
 
-pub(super) struct RegisteredBinding {
-    pub(super) action_name: &'static str,
-    pub(super) binding: Binding,
+pub(crate) struct RegisteredBinding {
+    pub(crate) action_name: &'static str,
+    pub(crate) binding: Binding,
 }
 
 impl Binding {
-    pub(super) fn new(keystrokes: &str, context: Option<&str>) -> Result<Self, KeybindingError> {
+    pub(crate) fn new(keystrokes: &str, context: Option<&str>) -> Result<Self, KeybindingError> {
         let keystrokes = keystrokes.trim();
         if keystrokes.is_empty() {
             return Err(KeybindingError::EmptyKeystrokes);
@@ -45,7 +45,7 @@ impl Binding {
         })
     }
 
-    pub(super) fn to_gpui(
+    pub(crate) fn to_gpui(
         &self,
         action: Box<dyn Action>,
     ) -> Result<KeyBinding, InvalidKeystrokeError> {
@@ -69,7 +69,7 @@ impl Binding {
 }
 
 impl RegisteredBinding {
-    pub(super) fn unbind(self) -> KeyBinding {
+    pub(crate) fn unbind(self) -> KeyBinding {
         KeyBinding::new(
             &self.binding.keystrokes,
             Unbind(SharedString::from(self.action_name)),

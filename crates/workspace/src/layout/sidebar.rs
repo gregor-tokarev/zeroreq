@@ -26,7 +26,7 @@ impl Sidebar {
             .items_center()
             .justify_center()
             .gap_2()
-            .text_size(px(13.))
+            .text_size(rems(0.8125))
             .child(
                 Button::new("add-new-collection")
                     .primary()
@@ -75,7 +75,7 @@ impl Sidebar {
                 .py_1()
                 .pl(indentation)
                 .pr_3()
-                .text_size(px(13.))
+                .text_size(rems(0.8125))
                 .child(file.name.clone())
                 .into_any_element(),
             Entry::Directory(directory) => div()
@@ -87,7 +87,7 @@ impl Sidebar {
                         .py_1()
                         .pl(indentation)
                         .pr_3()
-                        .text_size(px(13.))
+                        .text_size(rems(0.8125))
                         .font_weight(FontWeight::MEDIUM)
                         .child(directory.name.clone()),
                 )

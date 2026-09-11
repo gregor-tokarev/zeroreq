@@ -17,7 +17,21 @@ because the kit does not re-export it.
 Run `cargo test --workspace --locked` to test the workspace, or `make run` to
 build and launch the macOS app bundle.
 
+`make dev` watches project files and rebuilds and restarts an optimized release
+build named **Request Eagle (Dev)**. GPUI's detailed frame monitor appears in
+the upper-right corner. It shows current CPU draw time, `1%` for p99, `10%` for
+p90, maximum draw time, and frame count. Percentiles use the latest 1,000 draws;
+the 120 fps frame budget is 8.33 ms. These are CPU draw times, not displayed FPS
+or GPU timings. Stop the app and watcher with Ctrl-C. Normal release builds do
+not enable the monitor.
+
 ## Settings
+
+Application preferences live in `~/.request-eagle/preferences.json`, grouped by
+section, currently `appearance`. The `preferences` crate owns defaults, loading,
+validation, and atomic saves through `preferences::update`. Feature crates apply
+the shared values to their UI; the theme crate observes preference changes and
+updates colors and typography. Keybindings keep their separate service and file.
 
 Open Settings with **⌘,**, the status bar settings button, or **Request Eagle → Settings…**.
 General shows the installed version and update status. Use **Check for updates**
@@ -33,8 +47,6 @@ or remove the shortcut. Each row also has a Remove button that works without
 opening the recorder. You can reset individual commands or all commands to their defaults.
 
 Changes take effect immediately and save to `~/.request-eagle/keybindings.json`.
-On first launch, Request Eagle moves existing `~/.zeroreq` settings and collections
-to `~/.request-eagle` if the new folder does not already exist.
 If a saved shortcut conflicts with another binding at startup, the first registered
 binding stays active and the conflicting command appears unassigned with an error
 in Settings. Record a replacement or reset it to resolve the conflict. Startup
