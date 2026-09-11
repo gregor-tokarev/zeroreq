@@ -83,7 +83,11 @@ fn preview_cards_apply_the_selected_palette(cx: &mut TestAppContext) {
         cx.run_until_parked();
 
         cx.read(|cx| {
-            let preferences = preferences::get(cx).appearance;
+            let preferences = cx
+                .try_global::<preferences::Preferences>()
+                .cloned()
+                .unwrap_or_default()
+                .appearance;
             assert_eq!(preferences.light_theme, expected_light);
             assert_eq!(preferences.dark_theme, expected_dark);
         });
@@ -156,6 +160,15 @@ fn keyboard_can_reach_offscreen_themes(cx: &mut TestAppContext) {
         prefer_character_input: false,
     });
     cx.simulate_event(gpui_kit::KeyUpEvent { keystroke });
-    cx.read(|cx| assert_eq!(preferences::get(cx).appearance.dark_theme, "Twilight"));
+    cx.read(|cx| {
+        assert_eq!(
+            cx.try_global::<preferences::Preferences>()
+                .cloned()
+                .unwrap_or_default()
+                .appearance
+                .dark_theme,
+            "Twilight"
+        )
+    });
     assert!(cx.debug_bounds("theme-Twilight").is_some());
 }

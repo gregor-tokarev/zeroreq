@@ -35,11 +35,3 @@ pub fn apply(name: &str, cx: &mut App) -> bool {
 
     true
 }
-
-pub fn available_themes(cx: &App) -> Vec<SharedString> {
-    ThemeRegistry::global(cx)
-        .sorted_themes()
-        .into_iter()
-        .map(|theme| theme.name.clone())
-        .collect()
-}

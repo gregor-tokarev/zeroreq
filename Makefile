@@ -14,7 +14,7 @@ bundle:
 	rm -rf "$(APP)"
 	mkdir -p "$(APP)/Contents/MacOS" "$(APP)/Contents/Resources"
 	cp "$(BUILD_DIR)/request-eagle" "$(APP)/Contents/MacOS/request-eagle"
-	cp packaging/macos/AppIcon.icns "$(APP)/Contents/Resources/AppIcon.icns"
+	cp packaging/macos/AppIconEagleV2.icns "$(APP)/Contents/Resources/AppIconEagleV2.icns"
 	VERSION=$$(sed -n 's/^version = "\(.*\)"/\1/p' crates/request-eagle/Cargo.toml | head -1); \
 	BUILD_VERSION=$$(printf %s "$$VERSION" | tr -cd '0-9'); \
 	sed -e "s/__VERSION__/$$VERSION/g" -e "s/__BUILD_VERSION__/$${BUILD_VERSION:-1}/g" \

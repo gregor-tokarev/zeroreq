@@ -31,7 +31,12 @@ pub(in crate::settings) struct AppearanceSettings {
 
 impl AppearanceSettings {
     pub(in crate::settings) fn new(window: &mut Window, cx: &mut Context<Self>) -> Self {
-        let preferences = preferences::get(cx).appearance;
+        let preferences = cx
+            .try_global::<preferences::Preferences>()
+            .cloned()
+            .unwrap_or_default()
+            .appearance;
+
         let mut names = cx.text_system().all_font_names();
         names.sort_by_key(|name| name.to_lowercase());
         names.dedup();
@@ -42,6 +47,7 @@ impl AppearanceSettings {
 
         let mut fonts = vec![SharedString::from("Default monospace")];
         fonts.extend(names.into_iter().map(SharedString::from));
+
         let selected = fonts
             .iter()
             .position(|font| font.as_ref() == preferences.editor_font)
@@ -55,14 +61,20 @@ impl AppearanceSettings {
             )
             .searchable(true)
         });
+
         let subscription = cx.subscribe(&font, |this, _, event: &SelectEvent<FontList>, cx| {
             if let SelectEvent::Confirm(Some(font)) = event {
-                let mut preferences = preferences::get(cx).appearance;
+                let mut preferences = cx
+                    .try_global::<preferences::Preferences>()
+                    .cloned()
+                    .unwrap_or_default()
+                    .appearance;
                 preferences.editor_font = if font == "Default monospace" {
                     String::new()
                 } else {
                     font.to_string()
                 };
+
                 this.save(preferences, cx);
             }
         });
@@ -99,7 +111,11 @@ impl AppearanceSettings {
     }
 
     fn mode_buttons(&self, cx: &mut Context<Self>) -> impl IntoElement + use<> {
-        let preferences = preferences::get(cx).appearance;
+        let preferences = cx
+            .try_global::<preferences::Preferences>()
+            .cloned()
+            .unwrap_or_default()
+            .appearance;
 
         h_flex().gap_2().children(
             [
@@ -118,8 +134,13 @@ impl AppearanceSettings {
                     .label(label)
                     .when(preferences.mode == mode, |button| button.primary())
                     .on_click(cx.listener(move |this, _, _, cx| {
-                        let mut preferences = preferences::get(cx).appearance;
+                        let mut preferences = cx
+                            .try_global::<preferences::Preferences>()
+                            .cloned()
+                            .unwrap_or_default()
+                            .appearance;
                         preferences.mode = mode;
+
                         this.save(preferences, cx);
                     }))
             }),
@@ -127,17 +148,24 @@ impl AppearanceSettings {
     }
 
     fn theme_cards(&self, indices: &[usize], cx: &mut Context<Self>) -> impl IntoElement + use<> {
-        let preferences = preferences::get(cx).appearance;
+        let preferences = cx
+            .try_global::<preferences::Preferences>()
+            .cloned()
+            .unwrap_or_default()
+            .appearance;
+
         h_flex().gap_3().children(indices.iter().map(|&index| {
             let preview = &self.previews[index];
             let dark = preview.dark;
             let name = preview.name.clone();
+
             let selected = if dark {
                 &preferences.dark_theme
             } else {
                 &preferences.light_theme
             };
             let active = selected == name.as_ref();
+
             gpui_kit::base::Button::new(name.clone())
                 .track_focus(&self.theme_focus[index])
                 .on_key_down(cx.listener(move |this, event, window, cx| {
@@ -168,12 +196,18 @@ impl AppearanceSettings {
                 })
                 .child(preview.render(active, cx))
                 .on_click(cx.listener(move |this, _, _, cx| {
-                    let mut preferences = preferences::get(cx).appearance;
+                    let mut preferences = cx
+                        .try_global::<preferences::Preferences>()
+                        .cloned()
+                        .unwrap_or_default()
+                        .appearance;
+
                     if dark {
                         preferences.dark_theme = name.to_string();
                     } else {
                         preferences.light_theme = name.to_string();
                     }
+
                     this.save(preferences, cx);
                 }))
         }))
@@ -195,6 +229,7 @@ impl AppearanceSettings {
             "tab" => 1,
             _ => return,
         };
+
         let order = self
             .rows
             .iter()
@@ -207,9 +242,11 @@ impl AppearanceSettings {
                 _ => Vec::new(),
             })
             .collect::<Vec<_>>();
+
         let Some(position) = order.iter().position(|&(_, candidate)| candidate == index) else {
             return;
         };
+
         let Some(target) = position
             .checked_add_signed(delta)
             .and_then(|position| order.get(position))
@@ -226,13 +263,18 @@ impl AppearanceSettings {
                 offset_in_item: px(0.),
             });
         }
+
         window.focus(&self.theme_focus[target.1], cx);
         cx.stop_propagation();
         cx.notify();
     }
 
     fn header(&self, cx: &mut Context<Self>) -> impl IntoElement + use<> {
-        let preferences = preferences::get(cx).appearance;
+        let preferences = cx
+            .try_global::<preferences::Preferences>()
+            .cloned()
+            .unwrap_or_default()
+            .appearance;
         let font_size = preferences.interface_font_size;
 
         v_flex()
@@ -318,9 +360,13 @@ impl AppearanceSettings {
                                             .accessibility_label("Decrease interface font size")
                                             .tooltip("Decrease interface font size")
                                             .on_click(cx.listener(|this, _, _, cx| {
-                                                let mut preferences =
-                                                    preferences::get(cx).appearance;
+                                                let mut preferences = cx
+                                                    .try_global::<preferences::Preferences>()
+                                                    .cloned()
+                                                    .unwrap_or_default()
+                                                    .appearance;
                                                 preferences.interface_font_size -= 1.;
+
                                                 this.save(preferences, cx);
                                             })),
                                     )
@@ -338,9 +384,13 @@ impl AppearanceSettings {
                                             .accessibility_label("Increase interface font size")
                                             .tooltip("Increase interface font size")
                                             .on_click(cx.listener(|this, _, _, cx| {
-                                                let mut preferences =
-                                                    preferences::get(cx).appearance;
+                                                let mut preferences = cx
+                                                    .try_global::<preferences::Preferences>()
+                                                    .cloned()
+                                                    .unwrap_or_default()
+                                                    .appearance;
                                                 preferences.interface_font_size += 1.;
+
                                                 this.save(preferences, cx);
                                             })),
                                     )
@@ -349,9 +399,13 @@ impl AppearanceSettings {
                                             .ghost()
                                             .label("Reset")
                                             .on_click(cx.listener(|this, _, _, cx| {
-                                                let mut preferences =
-                                                    preferences::get(cx).appearance;
+                                                let mut preferences = cx
+                                                    .try_global::<preferences::Preferences>()
+                                                    .cloned()
+                                                    .unwrap_or_default()
+                                                    .appearance;
                                                 preferences.interface_font_size = 16.;
+
                                                 this.save(preferences, cx);
                                             })),
                                     ),
@@ -377,6 +431,7 @@ impl AppearanceSettings {
 
         for dark in [false, true] {
             self.rows.push(PageRow::Heading(dark));
+
             let indices = self
                 .previews
                 .iter()
@@ -396,7 +451,13 @@ impl AppearanceSettings {
         let Some(row) = self.rows.get(index) else {
             return div().into_any_element();
         };
-        let preferences = preferences::get(cx).appearance;
+
+        let preferences = cx
+            .try_global::<preferences::Preferences>()
+            .cloned()
+            .unwrap_or_default()
+            .appearance;
+
         let content = match row {
             PageRow::Header => self.header(cx).into_any_element(),
             PageRow::Heading(dark) => v_flex()

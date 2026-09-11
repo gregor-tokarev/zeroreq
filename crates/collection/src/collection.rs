@@ -170,6 +170,7 @@ fn save_file(entry: &mut FileEntry) -> Result<(), CollectionSaveError> {
             path: entry.path.clone(),
             source,
         })?;
+
     let mut document =
         entry
             .raw_content

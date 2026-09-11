@@ -25,45 +25,39 @@ struct Storage {
 
 impl Global for Storage {}
 
-/// Without a storage directory, updates remain in memory, including in tests.
 pub fn init(cx: &mut App) {
     if !cx.has_global::<Preferences>() {
         cx.set_global(Preferences::default());
     }
+
     if !cx.has_global::<Storage>() {
         cx.set_global(Storage::default());
     }
 }
 
-pub fn get(cx: &App) -> Preferences {
-    cx.try_global::<Preferences>().cloned().unwrap_or_default()
-}
-
-/// Load the application's shared preferences file from its data directory.
 pub fn load(directory: impl AsRef<Path>, cx: &mut App) -> Result<()> {
     init(cx);
+
     let path = directory.as_ref().join("preferences.json");
     cx.set_global(Storage {
         path: Some(path.clone()),
         load_error: None,
     });
 
-    let result = (|| -> Result<Preferences> {
-        let mut preferences = match read(&path)? {
-            Some(bytes) => serde_json::from_slice(&bytes).context("Invalid preferences.json")?,
-            None => Preferences::default(),
-        };
-        preferences.appearance.normalize();
-        Ok(preferences)
-    })();
+    let result: Result<Preferences> = read(&path).and_then(|bytes| match bytes {
+        Some(bytes) => serde_json::from_slice(&bytes).context("Invalid preferences.json"),
+        None => Ok(Preferences::default()),
+    });
 
     match result {
         Ok(preferences) => {
             cx.set_global(preferences);
+
             Ok(())
         }
         Err(error) => {
             cx.global_mut::<Storage>().load_error = Some(format!("{error:#}"));
+
             Err(error)
         }
     }
@@ -73,18 +67,20 @@ pub fn load(directory: impl AsRef<Path>, cx: &mut App) -> Result<()> {
 /// global value, so observers only apply changes that were saved successfully.
 pub fn update(cx: &mut App, change: impl FnOnce(&mut Preferences)) -> Result<()> {
     init(cx);
+
     if let Some(error) = &cx.global::<Storage>().load_error {
         bail!("{error}. Fix the preferences file and reload before saving changes.");
     }
 
-    let mut preferences = get(cx);
+    let mut preferences = cx.try_global::<Preferences>().cloned().unwrap_or_default();
     change(&mut preferences);
-    preferences.appearance.normalize();
 
     if let Some(path) = &cx.global::<Storage>().path {
         persist(path, &preferences)?;
     }
+
     cx.set_global(preferences);
+
     Ok(())
 }
 
@@ -105,8 +101,10 @@ fn persist(path: &Path, preferences: &Preferences) -> Result<()> {
     let mut temporary = tempfile::NamedTempFile::new_in(parent)?;
     temporary.write_all(&serde_json::to_vec_pretty(preferences)?)?;
     temporary.as_file().sync_all()?;
+
     temporary
         .persist(path)
         .with_context(|| format!("Could not save {}", path.display()))?;
+
     Ok(())
 }

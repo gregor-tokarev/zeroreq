@@ -53,6 +53,7 @@ impl ThemePreview {
                     std::slice::from_ref(&text_run),
                     None,
                 );
+
                 let check = selected.then(|| {
                     window.text_system().shape_line(
                         "✓".into(),
@@ -78,6 +79,7 @@ impl ThemePreview {
                     colors.border,
                     gpui_kit::BorderStyle::Solid,
                 ));
+
                 window.paint_quad(
                     fill(
                         Bounds::new(
@@ -105,6 +107,7 @@ impl ThemePreview {
                     rectangle(0.05, 0.13, 0.13, 0.05, 1., colors.primary);
                     rectangle(0.05, 0.28, 0.13, 0.05, 1., colors.foreground.opacity(0.3));
                     rectangle(0.05, 0.43, 0.13, 0.05, 1., colors.foreground.opacity(0.2));
+
                     rectangle(0.28, 0.13, 0.66, 0.16, 2., colors.secondary);
                     rectangle(0.28, 0.40, 0.39, 0.05, 1., colors.primary);
                     rectangle(0.28, 0.55, 0.29, 0.05, 1., colors.foreground.opacity(0.4));
@@ -134,6 +137,7 @@ impl ThemePreview {
                 let label_origin = card_bounds.origin + point(px(0.), px(76.) + gap);
                 let label_width =
                     card_bounds.size.width - if selected { font_size * 1.5 } else { px(0.) };
+
                 window.with_content_mask(
                     Some(ContentMask {
                         bounds: Bounds::new(label_origin, size(label_width, font_size * 1.5)),

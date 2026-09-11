@@ -109,6 +109,7 @@ pub fn register<A: Action>(
 
     cx.update_global::<KeybindingsService, _>(|service, cx| {
         let id = A::name_for_type();
+
         if service.commands.contains_key(id) {
             return Ok(());
         }
@@ -120,10 +121,12 @@ pub fn register<A: Action>(
                 .transpose()?,
             None => default_binding.clone(),
         };
+
         let binding_error = binding
             .as_ref()
             .and_then(|binding| service.check_conflict(id, binding).err())
             .map(|error| format!("Shortcut disabled: {error}"));
+
         if binding_error.is_some() {
             binding = None;
         }
@@ -192,9 +195,11 @@ pub fn set_override(
             .commands
             .get(id)
             .ok_or(KeybindingError::UnknownCommand)?;
+
         let binding = keystrokes
             .map(|keys| Binding::new(keys, command.context))
             .transpose()?;
+
         if let Some(binding) = &binding {
             service.check_conflict(id, binding)?;
         }
@@ -241,6 +246,7 @@ pub fn reset_all(cx: &mut App) -> Result<(), KeybindingError> {
             .iter()
             .map(|(&id, c)| (id, c.default_binding.clone()))
             .collect::<Vec<_>>();
+
         for (id, binding) in defaults {
             service.apply(id, binding, cx)?;
         }
@@ -306,6 +312,7 @@ impl KeybindingsService {
     ) -> Result<(), KeybindingError> {
         let action_type = action.as_any().type_id();
         let action_name = action.name();
+
         if self.bindings.get(&action_type).map(|entry| &entry.binding) == binding.as_ref() {
             return Ok(());
         }

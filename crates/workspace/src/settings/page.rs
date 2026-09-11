@@ -89,10 +89,6 @@ impl Settings {
         cx.notify();
     }
 
-    fn close(&mut self, _: &CloseSettings, _: &mut Window, cx: &mut Context<Self>) {
-        cx.emit(SettingsEvent::Close);
-    }
-
     fn page_buttons(&self, cx: &mut Context<Self>) -> Vec<Button> {
         [
             SettingsPage::General,
@@ -137,15 +133,6 @@ impl Settings {
             .pt(px(48.))
             .px_2()
             .pb_2()
-            .child(
-                div()
-                    .px_2()
-                    .mb_2()
-                    .text_xs()
-                    .font_weight(FontWeight::MEDIUM)
-                    .text_color(cx.theme().muted_foreground)
-                    .child("Settings"),
-            )
             .children(
                 self.page_buttons(cx)
                     .into_iter()
@@ -171,9 +158,7 @@ impl Settings {
                             .child("Back to workspace"),
                     )
                     .child(div().flex_1())
-                    .on_click(
-                        cx.listener(|this, _, window, cx| this.close(&CloseSettings, window, cx)),
-                    ),
+                    .on_click(cx.listener(|_, _, _, cx| cx.emit(SettingsEvent::Close))),
             )
     }
 }
@@ -205,9 +190,7 @@ impl Render for Settings {
                                     &CloseSettings,
                                     Some("Settings"),
                                 )
-                                .on_click(cx.listener(|this, _, window, cx| {
-                                    this.close(&CloseSettings, window, cx)
-                                })),
+                                .on_click(cx.listener(|_, _, _, cx| cx.emit(SettingsEvent::Close))),
                         ),
                 )
             })
@@ -246,7 +229,7 @@ impl Render for Settings {
             .debug_selector(|| "settings".into())
             .key_context("Settings")
             .track_focus(&self.focus_handle)
-            .on_action(cx.listener(Self::close))
+            .on_action(cx.listener(|_, _: &CloseSettings, _, cx| cx.emit(SettingsEvent::Close)))
             .relative()
             .size_full()
             .overflow_hidden()

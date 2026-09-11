@@ -30,14 +30,3 @@ impl Default for AppearancePreferences {
         }
     }
 }
-
-impl AppearancePreferences {
-    pub(crate) fn normalize(&mut self) {
-        self.interface_font_size = if self.interface_font_size.is_finite() {
-            self.interface_font_size.clamp(12., 24.)
-        } else {
-            16.
-        };
-        self.editor_font = self.editor_font.trim().chars().take(200).collect();
-    }
-}

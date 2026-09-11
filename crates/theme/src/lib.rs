@@ -7,4 +7,4 @@ mod registry;
 mod tests;
 
 pub use appearance::apply_preferences;
-pub use registry::{apply, available_themes, init};
+pub use registry::{apply, init};

@@ -6,17 +6,19 @@ use gpui_kit::{AssetSource, Result, SharedString};
 /// GPUI Kit.
 pub struct Assets;
 
-const LAYOUT_SIDEBAR_FILLED: &[u8] = include_bytes!("../assets/icons/layout-sidebar-filled.svg");
-const LAYOUT_SIDEBAR_INACTIVE: &[u8] =
-    include_bytes!("../assets/icons/layout-sidebar-inactive.svg");
-
 const LOCAL_ICONS: [(&str, &[u8]); 3] = [
     (
         "icons/keyboard.svg",
         include_bytes!("../assets/icons/keyboard.svg"),
     ),
-    ("icons/layout-sidebar-filled.svg", LAYOUT_SIDEBAR_FILLED),
-    ("icons/layout-sidebar-inactive.svg", LAYOUT_SIDEBAR_INACTIVE),
+    (
+        "icons/layout-sidebar-filled.svg",
+        include_bytes!("../assets/icons/layout-sidebar-filled.svg"),
+    ),
+    (
+        "icons/layout-sidebar-inactive.svg",
+        include_bytes!("../assets/icons/layout-sidebar-inactive.svg"),
+    ),
 ];
 
 impl AssetSource for Assets {

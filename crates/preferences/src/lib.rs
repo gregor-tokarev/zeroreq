@@ -8,4 +8,4 @@ mod store;
 mod tests;
 
 pub use appearance::{AppearanceMode, AppearancePreferences};
-pub use store::{Preferences, get, init, load, update};
+pub use store::{Preferences, init, load, update};

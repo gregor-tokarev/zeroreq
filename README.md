@@ -1,5 +1,5 @@
 <p align="center">
-  <img src=".github/icon.png" width="128" alt="Request Eagle icon">
+  <img src=".github/icon-eagle-v2.png" width="128" alt="Request Eagle icon">
 </p>
 
 <h1 align="center">Request Eagle</h1>
@@ -29,7 +29,7 @@ not enable the monitor.
 
 Application preferences live in `~/.request-eagle/preferences.json`, grouped by
 section, currently `appearance`. The `preferences` crate owns defaults, loading,
-validation, and atomic saves through `preferences::update`. Feature crates apply
+and atomic saves through `preferences::update`. Feature crates apply
 the shared values to their UI; the theme crate observes preference changes and
 updates colors and typography. Keybindings keep their separate service and file.
 

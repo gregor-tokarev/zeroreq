@@ -47,6 +47,7 @@ impl Layout {
         let sidebar_visible = cx.new(|_| true);
         let bottom_panel = cx.new(|cx| BottomPanel::new(sidebar_visible.clone(), cx));
         let sidebar_visibility_subscription = cx.observe(&sidebar_visible, |_, _, cx| cx.notify());
+
         let settings = cx.new(|cx| Settings::new(updater, window, cx));
         let settings_subscription = cx.subscribe_in(
             &settings,

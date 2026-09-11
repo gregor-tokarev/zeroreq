@@ -18,7 +18,7 @@ cargo build --locked --release -p request-eagle --target "$TARGET"
 cp "$ROOT/target/$TARGET/release/request-eagle" "$APP/Contents/MacOS/request-eagle"
 
 chmod 755 "$APP/Contents/MacOS/request-eagle"
-cp "$ROOT/packaging/macos/AppIcon.icns" "$APP/Contents/Resources/AppIcon.icns"
+cp "$ROOT/packaging/macos/AppIconEagleV2.icns" "$APP/Contents/Resources/AppIconEagleV2.icns"
 sed \
   -e "s/__VERSION__/$VERSION/g" \
   -e "s/__BUILD_VERSION__/$BUILD_VERSION/g" \
