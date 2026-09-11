@@ -1,10 +1,8 @@
 mod page;
 mod recorder;
+mod search;
 
-use page::shortcut_keycaps;
-
-#[cfg(test)]
-use page::matches_search;
+use page::{matches_search, shortcut_keycaps};
 
 #[cfg(test)]
 mod tests;

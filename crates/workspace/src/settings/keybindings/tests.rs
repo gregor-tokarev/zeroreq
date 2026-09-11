@@ -14,9 +14,7 @@ struct QuitCount(usize);
 
 impl Global for QuitCount {}
 
-// Root::new in the component dependency currently requires a native macOS
-// window. Host the real command rows without the search input, whose blur
-// handler requires Root. This exercises row layout, clicks, and key dispatch.
+// Host the search bar and command rows to exercise layout, clicks, and key dispatch.
 struct RecorderHarness {
     page: Entity<KeybindingsPage>,
     outside: gpui_kit::FocusHandle,
@@ -24,14 +22,23 @@ struct RecorderHarness {
 }
 
 impl Render for RecorderHarness {
-    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         self.page.update(cx, |page, cx| {
             let mut commands = keybindings::commands(cx);
             commands.sort_by_key(|command| command.label);
+            commands.retain(|command| page.matches_search(command, ""));
 
             gpui_kit::component::v_flex()
                 .w(self.width)
-                .child(div().id("outside-recorder").track_focus(&self.outside))
+                .child(
+                    div()
+                        .id("outside-recorder")
+                        .debug_selector(|| "outside-recorder".into())
+                        .w_full()
+                        .h_4()
+                        .track_focus(&self.outside),
+                )
+                .child(page.render_search(window, cx))
                 .children(
                     commands
                         .iter()
@@ -414,5 +421,207 @@ fn recording_keeps_command_rows_and_shortcut_column_in_place(cx: &mut TestAppCon
         for (selector, expected) in selectors.iter().zip(before) {
             assert_eq!(cx.debug_bounds(selector).unwrap(), expected);
         }
+    }
+}
+
+#[gpui_kit::test]
+fn shortcut_search_captures_filters_clears_and_releases_focus(cx: &mut TestAppContext) {
+    let (page, _, cx) = setup(cx);
+
+    cx.update(|window, cx| {
+        page.update(cx, |page, cx| {
+            page.search_by_shortcut = true;
+            page.focus_search(window, cx);
+            cx.notify();
+        });
+
+        // Capture immediately, even before the search recorder has been painted.
+        window.dispatch_keystroke(Keystroke::parse("cmd-q").unwrap(), cx);
+    });
+    cx.run_until_parked();
+
+    cx.read(|cx| {
+        assert_eq!(cx.global::<QuitCount>().0, 0);
+        assert_eq!(
+            page.read(cx).search_keystroke.as_ref().unwrap().unparse(),
+            "cmd-q"
+        );
+        assert_eq!(
+            keybindings::binding_for::<Quit>(cx).unwrap().keystrokes,
+            "cmd-q"
+        );
+    });
+    assert!(
+        cx.debug_bounds("keybinding-row-settings_tests::Quit")
+            .is_some()
+    );
+    assert!(
+        cx.debug_bounds("keybinding-row-workspace::ToggleLeftSidebar")
+            .is_none()
+    );
+
+    cx.simulate_keystrokes("cmd-shift-q");
+    assert!(
+        cx.debug_bounds("keybinding-row-settings_tests::Quit")
+            .is_none()
+    );
+
+    for key in [
+        "escape",
+        "enter",
+        "tab",
+        "shift-tab",
+        "backspace",
+        "delete",
+        "x",
+    ] {
+        cx.simulate_keystrokes(key);
+        cx.read(|cx| {
+            assert_eq!(
+                page.read(cx).search_keystroke.as_ref().unwrap().unparse(),
+                key
+            )
+        });
+    }
+
+    click_recorder_button("clear-shortcut-search", cx);
+    cx.read(|cx| {
+        let page = page.read(cx);
+        assert!(page.search_keystroke.is_none());
+        assert!(!page.search_by_shortcut);
+        assert!(page.search.read(cx).value().is_empty());
+    });
+    assert!(
+        cx.debug_bounds("keybinding-row-settings_tests::Quit")
+            .is_some()
+    );
+    assert!(
+        cx.debug_bounds("keybinding-row-workspace::ToggleLeftSidebar")
+            .is_some()
+    );
+
+    click_recorder_button("toggle-shortcut-search", cx);
+    cx.simulate_keystrokes("cmd-b");
+    assert!(
+        cx.debug_bounds("keybinding-row-settings_tests::Quit")
+            .is_none()
+    );
+    assert!(
+        cx.debug_bounds("keybinding-row-workspace::ToggleLeftSidebar")
+            .is_some()
+    );
+
+    let outside = cx.debug_bounds("outside-recorder").unwrap();
+    cx.simulate_click(outside.center(), Modifiers::default());
+    cx.simulate_keystrokes("cmd-q");
+    cx.read(|cx| {
+        assert_eq!(cx.global::<QuitCount>().0, 1);
+        assert_eq!(
+            page.read(cx).search_keystroke.as_ref().unwrap().unparse(),
+            "cmd-b"
+        );
+    });
+
+    click_recorder_button("toggle-shortcut-search", cx);
+    cx.read(|cx| {
+        assert!(!page.read(cx).search_by_shortcut);
+        assert!(page.read(cx).search_keystroke.is_none());
+    });
+}
+
+#[gpui_kit::test]
+fn shortcut_search_matches_keys_and_modifiers_without_using_command_text(cx: &mut TestAppContext) {
+    let (page, _, cx) = setup(cx);
+
+    cx.update(|_, cx| {
+        page.update(cx, |page, cx| {
+            page.search_by_shortcut = true;
+            let command = keybindings::commands(cx)
+                .into_iter()
+                .find(|command| command.id == ToggleLeftSidebar::name_for_type())
+                .unwrap();
+
+            for (keys, expected) in [
+                ("cmd-b", true),
+                ("b", false),
+                ("cmd-shift-b", false),
+                ("ctrl-b", false),
+                ("cmd-q", false),
+            ] {
+                let mut stroke = Keystroke::parse(keys).unwrap();
+                stroke.key_char = Some("b".into());
+                page.record_search_key(&stroke, cx);
+                assert_eq!(page.matches_search(&command, "sidebar"), expected, "{keys}");
+            }
+
+            let before = page.search_keystroke.clone();
+            for key in ["", "cmd", "shift", "ctrl", "alt", "fn"] {
+                page.record_search_key(
+                    &Keystroke {
+                        key: key.into(),
+                        ..Default::default()
+                    },
+                    cx,
+                );
+                assert_eq!(page.search_keystroke, before);
+            }
+
+            let mut unassigned = command.clone();
+            unassigned.binding = None;
+            assert!(!page.matches_search(&unassigned, ""));
+        });
+    });
+}
+
+#[gpui_kit::test]
+fn search_mode_switch_keeps_the_search_bar_and_rows_in_place(cx: &mut TestAppContext) {
+    for width in [px(320.), px(880.)] {
+        let (page, _, cx) = setup_width(cx, width);
+        let selectors = [
+            "keybindings-search",
+            "toggle-shortcut-search",
+            "keybinding-row-workspace::ToggleLeftSidebar",
+        ];
+        let before = selectors.map(|selector| cx.debug_bounds(selector).unwrap());
+
+        for _ in 0..2 {
+            click_recorder_button("toggle-shortcut-search", cx);
+            cx.read(|cx| assert!(page.read(cx).search_by_shortcut));
+
+            for (selector, expected) in selectors.iter().zip(before) {
+                assert_eq!(
+                    cx.debug_bounds(selector).unwrap(),
+                    expected,
+                    "{selector}, {width:?}"
+                );
+            }
+
+            // The cross exits recorder mode even before a shortcut is recorded.
+            click_recorder_button("clear-shortcut-search", cx);
+            cx.read(|cx| assert!(!page.read(cx).search_by_shortcut));
+
+            for (selector, expected) in selectors.iter().zip(before) {
+                assert_eq!(
+                    cx.debug_bounds(selector).unwrap(),
+                    expected,
+                    "{selector}, {width:?}"
+                );
+            }
+        }
+
+        cx.simulate_input("sidebar");
+        cx.read(|cx| assert_eq!(page.read(cx).search.read(cx).value(), "sidebar"));
+        click_recorder_button("toggle-shortcut-search", cx);
+        cx.simulate_keystrokes("cmd-b");
+        click_recorder_button("clear-shortcut-search", cx);
+        cx.read(|cx| {
+            let page = page.read(cx);
+            assert!(!page.search_by_shortcut);
+            assert!(page.search_keystroke.is_none());
+            assert!(page.search.read(cx).value().is_empty());
+        });
+
+        cx.simulate_input("settings");
+        cx.read(|cx| assert_eq!(page.read(cx).search.read(cx).value(), "settings"));
     }
 }
