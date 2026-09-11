@@ -1,6 +1,6 @@
 use gpui_kit::component::button::*;
 use gpui_kit::component::*;
-use gpui_kit::*;
+use gpui_kit::{prelude::FluentBuilder as _, *};
 use keybindings_service::{self as keybindings, Command};
 
 use super::{KeybindingsPage, shortcut_keycaps};
@@ -167,6 +167,9 @@ impl KeybindingsPage {
                     .ghost()
                     .small()
                     .icon(IconName::Delete)
+                    .when(recording.command.binding.is_some(), |this| {
+                        this.text_color(cx.theme().muted_foreground)
+                    })
                     .tooltip("Remove shortcut")
                     .disabled(recording.command.binding.is_none())
                     .on_click(cx.listener(|this, _, window, cx| this.remove_recording(window, cx))),
