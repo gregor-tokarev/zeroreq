@@ -103,17 +103,24 @@ impl Settings {
         .map(|page| {
             Button::new(page.title())
                 .ghost()
-                .h(px(44.))
-                .px_3()
-                .rounded_lg()
-                .text_size(rems(1.0))
+                .h(px(32.))
+                .px_2()
+                .rounded_md()
                 .text_color(cx.theme().muted_foreground)
+                .selected(self.page == page)
                 .when(self.page == page, |this| {
-                    this.bg(cx.theme().primary.opacity(0.16))
-                        .text_color(cx.theme().foreground)
+                    this.bg(cx.theme().muted).text_color(cx.theme().foreground)
                 })
-                .icon(page.icon().size_5())
-                .label(page.title())
+                .icon(page.icon().size_4())
+                .accessibility_label(page.title())
+                .child(
+                    div()
+                        .min_w_0()
+                        .text_ellipsis()
+                        .text_size(rems(0.8125))
+                        .line_height(relative(1.))
+                        .child(page.title()),
+                )
                 .child(div().flex_1())
                 .on_click(
                     cx.listener(move |this, _, window, cx| this.select_page(page, window, cx)),
@@ -128,8 +135,17 @@ impl Settings {
             .h_full()
             .bg(cx.theme().background)
             .pt(px(48.))
-            .px_3()
-            .pb_3()
+            .px_2()
+            .pb_2()
+            .child(
+                div()
+                    .px_2()
+                    .mb_2()
+                    .text_xs()
+                    .font_weight(FontWeight::MEDIUM)
+                    .text_color(cx.theme().muted_foreground)
+                    .child("Settings"),
+            )
             .children(
                 self.page_buttons(cx)
                     .into_iter()
@@ -139,14 +155,21 @@ impl Settings {
             .child(
                 Button::new("settings-back")
                     .ghost()
-                    .h(px(44.))
+                    .h(px(32.))
                     .w_full()
-                    .px_3()
-                    .rounded_lg()
-                    .text_size(rems(0.9375))
+                    .px_2()
+                    .rounded_md()
                     .text_color(cx.theme().muted_foreground)
-                    .icon(IconName::ArrowLeft)
-                    .label("Back to workspace")
+                    .icon(Icon::new(IconName::ArrowLeft).size_4())
+                    .accessibility_label("Back to workspace")
+                    .child(
+                        div()
+                            .min_w_0()
+                            .text_ellipsis()
+                            .text_size(rems(0.8125))
+                            .line_height(relative(1.))
+                            .child("Back to workspace"),
+                    )
                     .child(div().flex_1())
                     .on_click(
                         cx.listener(|this, _, window, cx| this.close(&CloseSettings, window, cx)),

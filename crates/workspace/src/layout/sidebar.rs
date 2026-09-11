@@ -58,8 +58,9 @@ impl Sidebar {
             .child(
                 div()
                     .px_3()
-                    .py_2()
-                    .font_weight(FontWeight::SEMIBOLD)
+                    .py_1()
+                    .text_size(rems(0.8125))
+                    .font_weight(FontWeight::MEDIUM)
                     .child(path_name(&collection.path)),
             )
             .children(collection.entries.iter().map(|entry| Self::entry(entry, 1)))
