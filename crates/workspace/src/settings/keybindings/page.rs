@@ -97,7 +97,7 @@ impl KeybindingsPage {
         h_flex()
             .debug_selector(move || format!("keybinding-row-{id}"))
             .w_full()
-            .h(px(76.))
+            .h(px(56.))
             .flex_none()
             .gap_3()
             .border_b_1()
@@ -113,31 +113,22 @@ impl KeybindingsPage {
                             .font_weight(FontWeight::MEDIUM)
                             .child(command.label),
                     )
-                    .child(
-                        div()
-                            .id(SharedString::from(format!("keybinding-error-{id}")))
-                            .h_4()
-                            .text_xs()
-                            .truncate()
-                            .text_color(if error.is_some() {
-                                cx.theme().danger
-                            } else {
-                                cx.theme().muted_foreground
-                            })
-                            .child(error.cloned().unwrap_or_else(|| {
-                                if compact {
-                                    String::new()
-                                } else {
-                                    command.description.to_owned()
-                                }
-                            }))
-                            .when_some(error, |this, error| {
-                                let error = error.clone();
-                                this.tooltip(move |window, cx| {
+                    .when_some(error, |this, error| {
+                        let error = error.clone();
+
+                        this.child(
+                            div()
+                                .id(SharedString::from(format!("keybinding-error-{id}")))
+                                .h_4()
+                                .text_xs()
+                                .truncate()
+                                .text_color(cx.theme().danger)
+                                .child(error.clone())
+                                .tooltip(move |window, cx| {
                                     Tooltip::new(error.clone()).build(window, cx)
-                                })
-                            }),
-                    ),
+                                }),
+                        )
+                    }),
             )
             .child(
                 div()
@@ -181,6 +172,9 @@ impl KeybindingsPage {
                                     .ghost()
                                     .small()
                                     .icon(IconName::Delete)
+                                    .when(command.binding.is_some(), |this| {
+                                        this.text_color(cx.theme().muted_foreground)
+                                    })
                                     .disabled(command.binding.is_none())
                                     .tooltip("Remove shortcut")
                                     .on_click(cx.listener(move |this, _, _, cx| {
