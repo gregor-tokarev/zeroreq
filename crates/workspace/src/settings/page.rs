@@ -163,39 +163,6 @@ impl Render for Settings {
             .flex_1()
             .min_w_0()
             .h_full()
-            .child(
-                h_flex()
-                    .h(px(44.))
-                    .flex_none()
-                    .px_5()
-                    .gap_2()
-                    .border_b_1()
-                    .border_color(cx.theme().border)
-                    .when(narrow, |this| this.pl_20())
-                    .child(
-                        div()
-                            .text_xs()
-                            .text_color(cx.theme().muted_foreground)
-                            .child("Settings"),
-                    )
-                    .child(
-                        Icon::new(IconName::ChevronRight)
-                            .size_3()
-                            .text_color(cx.theme().muted_foreground),
-                    )
-                    .child(div().text_xs().child(self.page.title()))
-                    .child(div().flex_1())
-                    .child(
-                        Button::new("close-settings")
-                            .ghost()
-                            .small()
-                            .icon(IconName::Close)
-                            .tooltip_with_action("Close settings", &CloseSettings, Some("Settings"))
-                            .on_click(cx.listener(|this, _, window, cx| {
-                                this.close(&CloseSettings, window, cx)
-                            })),
-                    ),
-            )
             .when(narrow, |this| {
                 this.child(
                     h_flex()
@@ -203,7 +170,22 @@ impl Render for Settings {
                         .py_2()
                         .gap_2()
                         .flex_wrap()
-                        .children(self.page_buttons(cx)),
+                        .children(self.page_buttons(cx))
+                        .child(div().flex_1())
+                        .child(
+                            Button::new("close-settings")
+                                .ghost()
+                                .small()
+                                .icon(IconName::Close)
+                                .tooltip_with_action(
+                                    "Close settings",
+                                    &CloseSettings,
+                                    Some("Settings"),
+                                )
+                                .on_click(cx.listener(|this, _, window, cx| {
+                                    this.close(&CloseSettings, window, cx)
+                                })),
+                        ),
                 )
             })
             .child(if self.page == SettingsPage::Appearance {
