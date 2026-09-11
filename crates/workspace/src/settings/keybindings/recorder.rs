@@ -30,11 +30,14 @@ impl KeybindingsPage {
             let _ = view.update(cx, |this, cx| {
                 // Focus changes immediately on activation; its parent scope is
                 // only present after the next paint, so do not wait for that tree.
-                if this.recording.is_none() || !this.recorder_focus.is_focused(window) {
+                if this.search_by_shortcut && this.search_focus.is_focused(window) {
+                    this.record_search_key(&event.keystroke, cx);
+                } else if this.recording.is_some() && this.recorder_focus.is_focused(window) {
+                    this.record_key(&event.keystroke, cx);
+                } else {
                     return;
                 }
 
-                this.record_key(&event.keystroke, cx);
                 window.prevent_default();
                 cx.stop_propagation();
             });

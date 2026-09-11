@@ -1,6 +1,6 @@
 use gpui_kit::component::{
     button::*,
-    input::{Input, InputEvent, InputState},
+    input::{InputEvent, InputState},
     kbd::Kbd,
     tooltip::Tooltip,
     *,
@@ -12,6 +12,9 @@ use super::recorder::Recording;
 
 pub(in crate::settings) struct KeybindingsPage {
     pub(super) search: Entity<InputState>,
+    pub(super) search_focus: FocusHandle,
+    pub(super) search_by_shortcut: bool,
+    pub(super) search_keystroke: Option<Keystroke>,
 
     pub(super) recorder_focus: FocusHandle,
     pub(super) recorder_scope: FocusHandle,
@@ -33,6 +36,9 @@ impl KeybindingsPage {
 
         Self {
             search,
+            search_focus: cx.focus_handle(),
+            search_by_shortcut: false,
+            search_keystroke: None,
             recorder_focus: cx.focus_handle(),
             recorder_scope,
             recording: None,
@@ -42,8 +48,12 @@ impl KeybindingsPage {
     }
 
     pub(in crate::settings) fn focus_search(&self, window: &mut Window, cx: &mut Context<Self>) {
-        self.search
-            .update(cx, |search, cx| search.focus(window, cx));
+        if self.search_by_shortcut {
+            window.focus(&self.search_focus, cx);
+        } else {
+            self.search
+                .update(cx, |search, cx| search.focus(window, cx));
+        }
     }
 
     fn reset(&mut self, id: Option<&str>, cx: &mut Context<Self>) {
@@ -57,7 +67,9 @@ impl KeybindingsPage {
         cx.notify();
     }
 
-    fn clear_search(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+    pub(super) fn clear_search(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.search_by_shortcut = false;
+        self.search_keystroke = None;
         self.search
             .update(cx, |search, cx| search.set_value("", window, cx));
         self.focus_search(window, cx);
@@ -208,7 +220,7 @@ impl Render for KeybindingsPage {
         let query = self.search.read(cx).value();
         let visible = commands
             .iter()
-            .filter(|command| matches_search(command, &query))
+            .filter(|command| self.matches_search(command, &query))
             .collect::<Vec<_>>();
 
         v_flex()
@@ -246,13 +258,7 @@ impl Render for KeybindingsPage {
                             .on_click(cx.listener(|this, _, _, cx| this.reset(None, cx))),
                     ),
             )
-            .child(
-                div().debug_selector(|| "keybindings-search".into()).child(
-                    Input::new(&self.search)
-                        .prefix(IconName::Search)
-                        .cleanable(true),
-                ),
-            )
+            .child(self.render_search(window, cx))
             .when_some(keybindings::storage_error(cx), |this, error| {
                 this.child(
                     div()

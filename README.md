@@ -40,7 +40,9 @@ to check manually, then **Install and relaunch** when a new version is available
 and starts a check. Automatic checks update the status quietly without opening Settings.
 
 The Keybindings page lists the settings and workspace shortcuts. Search by command
-name or shortcut, then click a shortcut to record a replacement in its row.
+name, or click the keyboard button in the search bar and press a shortcut to find
+its commands. Click outside the search bar to stop capturing keys, or use the
+clear button to show all commands and return to text search. Click a shortcut in a row to record a replacement.
 The recorder stays in the shortcut's column and captures every key, including
 Escape, Enter, Tab, and Backspace. Use the buttons beside it to save, cancel,
 or remove the shortcut. Each row also has a Remove button that works without
