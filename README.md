@@ -33,6 +33,12 @@ and atomic saves through `preferences::update`. Feature crates apply
 the shared values to their UI; the theme crate observes preference changes and
 updates colors and typography. Keybindings keep their separate service and file.
 
+Appearance offers 11 theme families, each with one light and one dark variant.
+Selecting either variant selects its partner, so switching Light, Dark, or System
+keeps the same family. On upgrade, the active saved family takes precedence.
+Removed themes use the remaining saved partner's family, or Ayu if neither is
+available. Catppuccin Frappe and Macchiato move to Latte/Mocha.
+
 Open Settings with **⌘,**, the status bar settings button, or **Request Eagle → Settings…**.
 General shows the installed version and update status. Use **Check for updates**
 to check manually, then **Install and relaunch** when a new version is available.
